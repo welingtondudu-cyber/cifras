@@ -298,6 +298,50 @@ export async function fetchMusicas(): Promise<Song[]> {
   }
 }
 
+export async function createMusicaDb(song: Omit<Song, 'id'>): Promise<Song | null> {
+  try {
+    const { data, error } = await supabase
+      .from('musicas')
+      .insert({
+        titulo: song.titulo,
+        artista: song.artista,
+        estilo: song.estilo,
+        tom_original: song.tom_original,
+        chordpro: song.chordpro,
+        publico: song.publico
+      })
+      .select()
+      .single();
+
+    if (error || !data) return null;
+    return data as Song;
+  } catch (err) {
+    console.error('Erro ao inserir música no Supabase:', err);
+    return null;
+  }
+}
+
+export async function updateMusicaDb(song: Song): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('musicas')
+      .update({
+        titulo: song.titulo,
+        artista: song.artista,
+        estilo: song.estilo,
+        tom_original: song.tom_original,
+        chordpro: song.chordpro,
+        publico: song.publico
+      })
+      .eq('id', song.id);
+
+    return !error;
+  } catch (err) {
+    console.error('Erro ao atualizar música no Supabase:', err);
+    return false;
+  }
+}
+
 // Métodos de Setlists
 export async function fetchSetlists(): Promise<Setlist[]> {
   try {
@@ -309,8 +353,69 @@ export async function fetchSetlists(): Promise<Setlist[]> {
     if (error || !data || data.length === 0) {
       return DEFAULT_SETLISTS;
     }
-    return data as Setlist[];
+
+    const mapped: Setlist[] = data.map((s: any) => ({
+      id: s.id,
+      user_id: s.user_id,
+      nome: s.nome,
+      descricao: s.descricao,
+      owner_name: s.owner_name || 'Welington_sc',
+      publico: s.publico,
+      arquivado: s.arquivado || false,
+      cover_gradient: s.cover_gradient || 'from-orange-500 to-amber-700',
+      itens: (s.setlist_itens || [])
+        .map((it: any) => ({
+          id: it.id,
+          setlist_id: it.setlist_id,
+          musica_id: it.musica_id,
+          ordem: it.ordem,
+          tom_customizado: it.tom_customizado,
+          musica: it.musicas
+        }))
+        .sort((a: any, b: any) => a.ordem - b.ordem),
+      created_at: s.created_at
+    }));
+
+    return mapped;
   } catch {
     return DEFAULT_SETLISTS;
+  }
+}
+
+export async function createSetlistDb(setlist: {
+  nome: string;
+  descricao?: string;
+  publico?: boolean;
+  songIds: string[];
+}): Promise<Setlist | null> {
+  try {
+    const { data: setlistData, error: sError } = await supabase
+      .from('setlists')
+      .insert({
+        nome: setlist.nome,
+        descricao: setlist.descricao || '',
+        publico: setlist.publico ?? true
+      })
+      .select()
+      .single();
+
+    if (sError || !setlistData) return null;
+
+    if (setlist.songIds && setlist.songIds.length > 0) {
+      const itemsToInsert = setlist.songIds.map((sid, idx) => ({
+        setlist_id: setlistData.id,
+        musica_id: sid,
+        ordem: idx + 1
+      }));
+
+      await supabase.from('setlist_itens').insert(itemsToInsert);
+    }
+
+    // Retornar o setlist recém-criado já populado
+    const allSetlists = await fetchSetlists();
+    return allSetlists.find(s => s.id === setlistData.id) || null;
+  } catch (err) {
+    console.error('Erro ao criar setlist no Supabase:', err);
+    return null;
   }
 }

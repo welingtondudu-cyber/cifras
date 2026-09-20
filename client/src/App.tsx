@@ -12,6 +12,9 @@ import {
   DEFAULT_SETLISTS,
   fetchMusicas,
   fetchSetlists,
+  createMusicaDb,
+  updateMusicaDb,
+  createSetlistDb,
   getCurrentUser,
   signOutUser,
   supabase
@@ -277,8 +280,28 @@ export function App() {
     setSetlists(prev => prev.map(s => (s.id === updated.id ? updated : s)));
   };
 
-  // Criar Repertório (Manualmente)
-  const handleCreateSetlist = (name: string, description: string, isPublic: boolean, selectedSongIds: string[]) => {
+  // Criar Repertório (Manualmente no Supabase + Estado Local)
+  const handleCreateSetlist = async (
+    name: string,
+    description: string,
+    isPublic: boolean,
+    selectedSongIds: string[]
+  ) => {
+    const dbSetlist = await createSetlistDb({
+      nome: name,
+      descricao: description,
+      publico: isPublic,
+      songIds: selectedSongIds
+    });
+
+    if (dbSetlist) {
+      setSetlists(prev => [dbSetlist, ...prev]);
+      setActiveSetlist(dbSetlist);
+      setScreenView('setlist');
+      return;
+    }
+
+    // Fallback local caso offline
     const newSetlistId = 'set-' + Date.now();
     const items = selectedSongIds.map((sid, idx) => {
       const songFound = songs.find(s => s.id === sid);
@@ -307,32 +330,8 @@ export function App() {
   };
 
   // Criar Repertório a partir da IA
-  const handleCreateSetlistFromAI = (name: string, songIds: string[]) => {
-    const newSetlistId = 'set-ai-' + Date.now();
-    const items = songIds.map((sid, idx) => {
-      const songFound = songs.find(s => s.id === sid);
-      return {
-        id: 'item-ai-' + Date.now() + '-' + idx,
-        setlist_id: newSetlistId,
-        musica_id: sid,
-        ordem: idx + 1,
-        musica: songFound
-      };
-    });
-
-    const newSetlist: Setlist = {
-      id: newSetlistId,
-      nome: name,
-      descricao: 'Criado pelo Assistente IA',
-      owner_name: user?.name || 'Welington_sc',
-      publico: true,
-      cover_gradient: 'from-orange-600 to-amber-600',
-      itens: items
-    };
-
-    setSetlists(prev => [newSetlist, ...prev]);
-    setActiveSetlist(newSetlist);
-    setScreenView('setlist');
+  const handleCreateSetlistFromAI = async (name: string, songIds: string[]) => {
+    await handleCreateSetlist(name, 'Criado pelo Assistente IA', true, songIds);
   };
 
   // Reordenar Repertório sugerido pela IA
@@ -340,9 +339,10 @@ export function App() {
     handleReorderAllSetlistItems(reorderedItemIds);
   };
 
-  // Cadastrar nova cifra individual
+  // Cadastrar nova cifra individual (Supabase + Estado Local)
   const handleAddSong = async (newSongData: Omit<Song, 'id'>) => {
-    const createdSong: Song = {
+    const dbSong = await createMusicaDb(newSongData);
+    const createdSong: Song = dbSong || {
       ...newSongData,
       id: 'song-' + Date.now()
     };
@@ -351,25 +351,33 @@ export function App() {
     setScreenView('stage');
   };
 
-  // Upload massivo de cifras
+  // Upload massivo de cifras (Supabase + Estado Local)
   const handleBatchAddSongs = async (newSongsData: Omit<Song, 'id'>[]) => {
-    const createdList: Song[] = newSongsData.map((d, idx) => ({
-      ...d,
-      id: 'song-bulk-' + Date.now() + '-' + idx
-    }));
+    const createdList: Song[] = [];
+    for (let i = 0; i < newSongsData.length; i++) {
+      const data = newSongsData[i];
+      const dbSong = await createMusicaDb(data);
+      createdList.push(
+        dbSong || {
+          ...data,
+          id: 'song-bulk-' + Date.now() + '-' + i
+        }
+      );
+    }
     setSongs(prev => [...createdList, ...prev]);
     if (createdList.length > 0) {
       setActiveSong(createdList[0]);
     }
   };
 
-  // Editar cifra existente
+  // Editar cifra existente (Supabase + Estado Local)
   const handleEditActiveSong = () => {
     setEditingSong(activeSong);
     setIsCreateSongOpen(true);
   };
 
   const handleUpdateSong = async (updated: Song) => {
+    await updateMusicaDb(updated);
     setSongs(prev => prev.map(s => (s.id === updated.id ? updated : s)));
     if (activeSong.id === updated.id) {
       setActiveSong(updated);
