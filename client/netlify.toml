@@ -1,0 +1,26 @@
+# Netlify configuration for CIFRALAB PRO (V7)
+[build]
+  base = "client"
+  publish = "dist"
+  command = "npm run build"
+
+# Proxy reverso para o backend BFF Java Spring Boot (quando configurado)
+[[redirects]]
+  from = "/api/*"
+  to = "https://cifralab-bff.onrender.com/api/:splat"
+  status = 200
+  force = false
+
+# SPA fallback para React Router / navegação do cliente
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
