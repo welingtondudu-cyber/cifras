@@ -15,6 +15,7 @@ import {
   createMusicaDb,
   updateMusicaDb,
   createSetlistDb,
+  updateSetlistItemsOrderDb,
   getCurrentUser,
   signOutUser,
   supabase
@@ -75,6 +76,16 @@ export function App() {
   // Painel de IA lateral (estilo IDE Antigravity)
   const [isAIPanelOpen, setIsAIPanelOpen] = useState<boolean>(false);
   const [isMobileToolsOpen, setIsMobileToolsOpen] = useState<boolean>(false);
+  const [pendingAIPrompt, setPendingAIPrompt] = useState<string | null>(null);
+
+  // Disparar reordenação harmônica de repertório com IA
+  const handleRequestAIReorder = () => {
+    if (!activeSetlist) return;
+    setIsAIPanelOpen(true);
+    setPendingAIPrompt(
+      `Reordene as músicas do repertório '${activeSetlist.nome}' para criar a melhor sequência harmônica com transições suaves de tom para o show ao vivo.`
+    );
+  };
 
   // Modais e Estados Auxiliares
   const [isCreateSetlistOpen, setIsCreateSetlistOpen] = useState<boolean>(false);
@@ -224,8 +235,8 @@ export function App() {
     }
   };
 
-  // Reordenação de Itens do Repertório (Arrastar / Drag and Drop)
-  const handleReorderAllSetlistItems = (reorderedItemIds: string[]) => {
+  // Reordenação de Itens do Repertório (Arrastar / Drag and Drop / IA)
+  const handleReorderAllSetlistItems = async (reorderedItemIds: string[]) => {
     if (!activeSetlist) return;
     const reorderedItens: typeof activeSetlist.itens = [];
 
@@ -239,6 +250,7 @@ export function App() {
     const updatedSetlist = { ...activeSetlist, itens: reorderedItens };
     setActiveSetlist(updatedSetlist);
     setSetlists(prev => prev.map(s => (s.id === updatedSetlist.id ? updatedSetlist : s)));
+    await updateSetlistItemsOrderDb(reorderedItemIds);
   };
 
   // Adicionar música ao repertório ativo
@@ -607,6 +619,7 @@ ${song.chordpro}`;
               onToggleArchive={() => handleToggleArchiveSetlist(activeSetlist.id)}
               onUpdateSetlistDetails={handleUpdateSetlistDetails}
               onToggleAIPanel={() => setIsAIPanelOpen(prev => !prev)}
+              onRequestAIReorder={handleRequestAIReorder}
               onSelectSongDirectly={(song, idx) => {
                 setActiveSong(song);
                 setSongIndexInSetlist(idx);
@@ -722,10 +735,13 @@ ${song.chordpro}`;
           screenView={screenView}
           currentSong={activeSong}
           currentSetlist={activeSetlist}
+          availableSetlists={setlists}
           instrument={instrument}
           availableSongs={songs}
           onCreateSetlistFromAI={handleCreateSetlistFromAI}
           onReorderSetlistFromAI={handleReorderSetlistFromAI}
+          promptToExecute={pendingAIPrompt}
+          onPromptExecuted={() => setPendingAIPrompt(null)}
         />
       </div>
 

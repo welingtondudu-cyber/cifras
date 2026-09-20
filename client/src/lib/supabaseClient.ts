@@ -419,3 +419,24 @@ export async function createSetlistDb(setlist: {
     return null;
   }
 }
+
+/**
+ * Atualiza a ordem dos itens do repertório no Supabase
+ */
+export async function updateSetlistItemsOrderDb(reorderedItemIds: string[]): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    for (let idx = 0; idx < reorderedItemIds.length; idx++) {
+      const itemId = reorderedItemIds[idx];
+      await supabase
+        .from('setlist_itens')
+        .update({ ordem: idx + 1 })
+        .eq('id', itemId);
+    }
+    return true;
+  } catch (err) {
+    console.error('Erro ao atualizar ordenação no Supabase:', err);
+    return false;
+  }
+}
+

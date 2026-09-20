@@ -4,10 +4,21 @@ import type { ChordShape } from '../types/music';
 interface ChordDiagramProps {
   chordShape: ChordShape;
   size?: 'sm' | 'md' | 'lg';
+  showControls?: boolean;
+  onPrevVariation?: () => void;
+  onNextVariation?: () => void;
+  onClick?: () => void;
 }
 
-export const ChordDiagram: React.FC<ChordDiagramProps> = ({ chordShape, size = 'md' }) => {
-  const { chord, instrument, frets } = chordShape;
+export const ChordDiagram: React.FC<ChordDiagramProps> = ({
+  chordShape,
+  size = 'md',
+  showControls = true,
+  onPrevVariation,
+  onNextVariation,
+  onClick
+}) => {
+  const { chord, instrument, frets, variationIndex = 0, totalVariations = 1 } = chordShape;
   const numStrings = instrument === 'cavaco' ? 4 : 6;
   const numFrets = 4;
 
@@ -29,9 +40,45 @@ export const ChordDiagram: React.FC<ChordDiagramProps> = ({ chordShape, size = '
   const fretSpacing = fretboardHeight / numFrets;
 
   return (
-    <div className="flex flex-col items-center bg-[#181818] border border-zinc-800 rounded-xl p-2 shadow-md hover:border-orange-500/60 transition-all">
-      <div className="text-center mb-1">
+    <div
+      onClick={onClick}
+      className="flex flex-col items-center bg-[#181818] border border-zinc-800 rounded-xl p-2 shadow-md hover:border-orange-500/60 transition-all relative group"
+    >
+      <div className="flex items-center justify-between w-full px-1 mb-1">
         <span className="font-bold text-sm text-orange-500 font-mono tracking-tight">{chord}</span>
+        {showControls && totalVariations > 1 && (
+          <div className="flex items-center gap-0.5 bg-zinc-900 border border-zinc-700/80 rounded px-1.5 py-0.5 text-[10px] text-zinc-400 font-mono">
+            {onPrevVariation && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPrevVariation();
+                }}
+                title="Forma anterior do acorde"
+                className="hover:text-orange-400 active:scale-90 px-0.5 text-zinc-400 hover:bg-zinc-800 rounded transition-colors text-xs leading-none"
+              >
+                ‹
+              </button>
+            )}
+            <span className="text-[10px] text-zinc-300 font-semibold select-none px-0.5">
+              {variationIndex + 1}/{totalVariations}
+            </span>
+            {onNextVariation && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onNextVariation();
+                }}
+                title="Próxima forma do acorde"
+                className="hover:text-orange-400 active:scale-90 px-0.5 text-zinc-400 hover:bg-zinc-800 rounded transition-colors text-xs leading-none"
+              >
+                ›
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       <svg width={width} height={height} className="select-none overflow-visible">

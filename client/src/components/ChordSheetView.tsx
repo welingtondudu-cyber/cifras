@@ -27,6 +27,8 @@ export const ChordSheetView: React.FC<ChordSheetViewProps> = ({
   onViewModeChange,
   onSelectChord,
 }) => {
+  const [chordVariations, setChordVariations] = React.useState<Record<string, number>>({});
+
   return (
     <div className="text-zinc-100 font-sans select-text pb-20">
       {/* Cabeçalho Unificado de Abas */}
@@ -37,19 +39,37 @@ export const ChordSheetView: React.FC<ChordSheetViewProps> = ({
         onViewModeChange={onViewModeChange}
       />
 
-      {/* Carrossel Horizontal de Diagramas SVG de Acordes */}
+      {/* Carrossel Horizontal de Diagramas SVG de Acordes com Troca de Forma */}
       {showDiagrams && parsedSong.chords.length > 0 && (
         <div className="mb-6 pb-4 border-b border-zinc-800 overflow-x-auto scrollbar-thin scrollbar-thumb-zinc-700">
           <div className="flex items-center gap-3">
             {parsedSong.chords.map(chord => {
-              const shape = getChordShape(chord, instrument);
+              const currentVar = chordVariations[chord] || 0;
+              const shape = getChordShape(chord, instrument, currentVar);
               return (
                 <div
                   key={`${instrument}-${chord}`}
-                  onClick={() => onSelectChord(chord)}
                   className="cursor-pointer hover:scale-105 transition-transform"
                 >
-                  <ChordDiagram chordShape={shape} size="sm" />
+                  <ChordDiagram
+                    chordShape={shape}
+                    size="sm"
+                    onPrevVariation={() => {
+                      setChordVariations(prev => {
+                        const cur = prev[chord] || 0;
+                        const total = shape.totalVariations || 1;
+                        return { ...prev, [chord]: (cur - 1 + total) % total };
+                      });
+                    }}
+                    onNextVariation={() => {
+                      setChordVariations(prev => {
+                        const cur = prev[chord] || 0;
+                        const total = shape.totalVariations || 1;
+                        return { ...prev, [chord]: (cur + 1) % total };
+                      });
+                    }}
+                    onClick={() => onSelectChord(chord)}
+                  />
                 </div>
               );
             })}

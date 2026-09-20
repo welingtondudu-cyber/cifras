@@ -21,6 +21,8 @@ export const ChordDictionaryModal: React.FC<ChordDictionaryModalProps> = ({
   onToggleInstrument,
   highlightedChord,
 }) => {
+  const [modalChordVariations, setModalChordVariations] = React.useState<Record<string, number>>({});
+
   if (!isOpen) return null;
 
   return (
@@ -39,6 +41,7 @@ export const ChordDictionaryModal: React.FC<ChordDictionaryModalProps> = ({
                 <span className="text-orange-500 font-semibold">
                   {instrument === 'cavaco' ? 'Cavaco' : 'Violão e guitarra'}
                 </span>
+                {' · '}Use ‹ e › para alternar a forma/digitação
               </p>
             </div>
           </div>
@@ -68,7 +71,8 @@ export const ChordDictionaryModal: React.FC<ChordDictionaryModalProps> = ({
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
               {chords.map(chord => {
-                const shape = getChordShape(chord, instrument);
+                const curVar = modalChordVariations[chord] || 0;
+                const shape = getChordShape(chord, instrument, curVar);
                 const isSelected = highlightedChord === chord;
 
                 return (
@@ -78,7 +82,24 @@ export const ChordDictionaryModal: React.FC<ChordDictionaryModalProps> = ({
                       isSelected ? 'ring-2 ring-orange-500 scale-105' : ''
                     }`}
                   >
-                    <ChordDiagram chordShape={shape} size="md" />
+                    <ChordDiagram
+                      chordShape={shape}
+                      size="md"
+                      onPrevVariation={() => {
+                        setModalChordVariations(prev => {
+                          const cur = prev[chord] || 0;
+                          const total = shape.totalVariations || 1;
+                          return { ...prev, [chord]: (cur - 1 + total) % total };
+                        });
+                      }}
+                      onNextVariation={() => {
+                        setModalChordVariations(prev => {
+                          const cur = prev[chord] || 0;
+                          const total = shape.totalVariations || 1;
+                          return { ...prev, [chord]: (cur + 1) % total };
+                        });
+                      }}
+                    />
                   </div>
                 );
               })}

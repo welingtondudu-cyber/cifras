@@ -53,6 +53,8 @@ export interface ChordShape {
   fingers?: number[];
   baseFret?: number;
   barres?: number[];
+  variationIndex?: number;
+  totalVariations?: number;
 }
 
 export interface ParsedLineSegment {

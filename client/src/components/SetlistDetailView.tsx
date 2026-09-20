@@ -31,6 +31,7 @@ interface SetlistDetailViewProps {
   onToggleArchive?: () => void;
   onUpdateSetlistDetails?: (name: string, description: string) => void;
   onToggleAIPanel: () => void;
+  onRequestAIReorder?: () => void;
   onSelectSongDirectly: (song: Song, indexInSetlist: number) => void;
 }
 
@@ -46,6 +47,7 @@ export const SetlistDetailView: React.FC<SetlistDetailViewProps> = ({
   onToggleArchive,
   onUpdateSetlistDetails,
   onToggleAIPanel,
+  onRequestAIReorder,
   onSelectSongDirectly,
 }) => {
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
@@ -113,6 +115,18 @@ export const SetlistDetailView: React.FC<SetlistDetailViewProps> = ({
         </button>
 
         <div className="flex items-center gap-2">
+          {/* Botão de Ordenação Inteligente por IA */}
+          {onRequestAIReorder && setlist.itens.length > 1 && (
+            <button
+              onClick={onRequestAIReorder}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-orange-500/25 to-amber-500/20 text-orange-400 border border-orange-500/40 text-xs font-bold hover:bg-orange-500/30 transition-all active:scale-95 shadow-sm"
+              title="Pedir à IA para organizar a sequência harmônica ideal das músicas"
+            >
+              <Sparkles size={13} className="text-orange-400 animate-pulse" />
+              <span>Ordenar com IA</span>
+            </button>
+          )}
+
           {/* Acesso ao Chat IA para editar repertório */}
           <button
             onClick={onToggleAIPanel}
@@ -264,7 +278,19 @@ export const SetlistDetailView: React.FC<SetlistDetailViewProps> = ({
       {/* Lista de Músicas com Drag & Drop */}
       <div className="space-y-2">
         <div className="flex items-center justify-between pb-2 text-xs font-semibold text-zinc-400 uppercase tracking-wider px-2">
-          <span>Arraste as músicas para organizar a ordem</span>
+          <div className="flex items-center gap-2">
+            <span>Arraste as músicas para organizar a ordem</span>
+            {onRequestAIReorder && setlist.itens.length > 1 && (
+              <button
+                onClick={onRequestAIReorder}
+                className="text-[11px] font-bold text-orange-400 hover:text-orange-300 flex items-center gap-1 bg-orange-500/10 hover:bg-orange-500/20 px-2 py-0.5 rounded border border-orange-500/30 transition-colors cursor-pointer"
+                title="Sugerir e aplicar ordem harmônica ideal com IA"
+              >
+                <Sparkles size={11} />
+                <span>Auto-ordenar com IA</span>
+              </button>
+            )}
+          </div>
           <span>Ações</span>
         </div>
 
