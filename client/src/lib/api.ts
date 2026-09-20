@@ -5,6 +5,7 @@ export interface HarmonicMessage {
 
 export interface StreamChatParams {
   prompt: string;
+  history?: { role: 'user' | 'assistant'; content: string }[];
   tomAtual: string;
   instrumento: string;
   chordproSnippet: string;
@@ -18,11 +19,12 @@ const BFF_URL = import.meta.env.VITE_BFF_URL || 'http://localhost:8080';
 const OPENAI_KEY = import.meta.env.VITE_OPENAI_API_KEY || '';
 
 /**
- * Realiza streaming de chat harmônico priorizando o BFF Java WebFlux (SSE)
- * com fallback direto via OpenAI caso o BFF esteja offline.
+ * Realiza streaming de chat harmônico com histórico multiturn,
+ * priorizando BFF Spring Boot via SSE ou fallback direto via OpenAI.
  */
 export async function streamHarmonicChat({
   prompt,
+  history = [],
   tomAtual,
   instrumento,
   chordproSnippet,
@@ -43,6 +45,7 @@ export async function streamHarmonicChat({
       },
       body: JSON.stringify({
         prompt,
+        history,
         tomAtual,
         instrumento,
         chordproSnippet,
@@ -82,9 +85,47 @@ export async function streamHarmonicChat({
     console.info('BFF offline ou indisponível, usando fallback seguro direto:', err);
   }
 
-  // 2. Fallback direto via OpenAI API se fornecida
+  // 2. Fallback direto via OpenAI API com histórico multiturn e prompt especializado
   if (!bffSuccess && OPENAI_KEY) {
     try {
+      // Filtrar e preparar histórico da conversa (últimas 10 mensagens para contexto ágil)
+      const formattedHistory = history
+        .slice(-10)
+        .filter(h => h.content && h.content.trim())
+        .map(h => ({
+          role: h.role === 'user' ? ('user' as const) : ('assistant' as const),
+          content: h.content
+        }));
+
+      const systemPrompt = `Você é o CIFRALAB Harmonic AI Advisor, mestre e especialista em Teoria Musical, Harmonia Funcional, Arranjos de Palco e Repertórios para Cavaquinho (afinação D-G-B-D) e Violão/Guitarra (afinação E-A-D-G-B-E).
+Instrumento ativo do músico: ${instrumento}. Tom atual: ${tomAtual}.
+
+=== DIÁLOGO E CONTEXTO MULTITURN (MEMÓRIA) ===
+- Você está em uma conversa contínua. LEMBRE-SE SEMPRE das mensagens anteriores, das músicas sugeridas e das preferências do usuário.
+- Se o usuário fizer uma crítica, correção ou ajuste (ex: "tem músicas que você colocou que não são de samba", ou "mude a ordem", ou "troque essa música"), NUNCA recuse o assunto nem dê respostas genéricas! Ouça com atenção, acolha o feedback ("Tem toda razão!", "Perfeito, vamos ajustar!") e forneça imediatamente a lista corrigida e coerente.
+
+=== CRIAÇÃO E ESTRUTURAÇÃO DE REPERTÓRIOS ===
+Quando o usuário pedir sugestão, montagem ou ajuste de um repertório:
+1. Respeite com RIGOR o gênero ou estilo solicitado (ex: se pediu Samba/Pagode, coloque APENAS Samba e Pagode; se pediu Sertanejo, coloque apenas Sertanejo; se pediu Gospel, apenas Gospel).
+2. PRIORIZE as músicas pertencentes ao catálogo do usuário informadas no prompt.
+3. Crie sempre um NOME CRIATIVO, INSPIRADOR E PERSONALIZADO para o repertório (ex: "Samba de Raiz & Roda de Pagode", "Noite Acústica & MPB", "Clássicos Sertanejos Ao Vivo", "Louvor & Adoração Intimista"). NUNCA use "Setlist Sugerido pela IA".
+4. Explique a ordem das músicas com base em harmonia (transição suave de tons pelo ciclo das quintas) e dinâmica de show.
+5. OBRIGATÓRIO AO SUGERIR REPERTÓRIO: No final da sua resposta, adicione SEMPRE o bloco abaixo para permitir a criação automática do repertório no sistema:
+[SETLIST_DATA]
+TITLE: <Nome Criativo do Repertório>
+SONGS: <Nome Exato da Música 1>, <Nome Exato da Música 2>, ...
+[/SETLIST_DATA]
+
+=== ENSINO PRÁTICO DE TEORIA MUSICAL ===
+Explique com didática profunda: Campos Harmônicos, Modos Gregos, Cadências (II-V-I, IV-V-I), Dominantes Secundários, SubV7, Empréstimo Modal e Diminutos de Passagem, sempre com exemplos práticos em músicas conhecidas.
+
+=== ESCOPO ===
+Mantenha seu foco em música, cifras, acordes, instrumentos, arranjos e repertórios. Caso o usuário pergunte sobre assuntos completamente alheios à música (como culinária ou notícias gerais), gentilmente traga o foco de volta para a música.`;
+
+      const currentPromptContent = `Contexto: ${instrumento} | Tom: ${tomAtual}${
+        chordproSnippet ? `\nCifra:\n${chordproSnippet.slice(0, 200)}` : ''
+      }\n\nMensagem do usuário: ${prompt}`;
+
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -97,22 +138,12 @@ export async function streamHarmonicChat({
           messages: [
             {
               role: 'system',
-              content: `Você é o CIFRALAB Harmonic AI Advisor, mestre e especialista exclusivo em Teoria Musical, Harmonia Funcional, Arranjos de Palco e Repertórios para Cavaquinho (afinação D-G-B-D) e Violão (afinação E-A-D-G-B-E). O usuário está no instrumento ${instrumento} e tom ${tomAtual}.
-
-=== REGRA CRÍTICA DE ESCOPO (GUARDRAIL RESTRITO) ===
-Você é ESTRITAMENTE PROIBIDO de conversar sobre qualquer assunto que NÃO seja ligado diretamente à MÚSICA (teoria musical, harmonia funcional, arranjo, repertório, afinação, técnica instrumental, história da música e cifras). Se o usuário perguntar sobre culinária, política, esportes, programação geral, notícias ou qualquer outro assunto fora da música, RECUSE EDUCADAMENTE dizendo:
-"Como assistente musical do CIFRALAB, meu foco exclusivo é em música, harmonia e repertório. Como posso te ajudar com suas cifras, teoria musical ou arranjos para palco?"
-
-=== ENSINO PRÁTICO DE TEORIA MUSICAL ===
-Domine e explique com profundidade e didática: Campos Harmônicos (Maior e Menor), Modos Gregos, Cadências Harmônicas (II-V-I, IV-V-I), Dominantes Secundários (V7/V, V7/II, etc.), Substituições Tritonais (SubV7), Empréstimo Modal, Acordes Diminutos de Passagem e Inversões de Baixo.
-REGRA DE OURO: Sempre que explicar um conceito teórico, UTILIZE MÚSICAS REAIS como exemplo prático (ex: mostre onde ocorre o II-V-I ou acorde diminuto em músicas consagradas como 'Ainda Bem', 'Não Deixe o Samba Morrer', 'Carinhoso', 'O Mundo é um Moinho', etc.), explicando o efeito sonoro e a sensação harmônica na música.
-
-=== ESTRUTURAÇÃO DE REPERTÓRIO ===
-Auxilie a organizar repertórios harmônicos por ciclo das quintas e dinâmica de palco.`
+              content: systemPrompt
             },
+            ...formattedHistory,
             {
               role: 'user',
-              content: `Música em ${tomAtual}. Trecho:\n${chordproSnippet}\n\nDúvida/Pedido: ${prompt}`
+              content: currentPromptContent
             }
           ]
         })

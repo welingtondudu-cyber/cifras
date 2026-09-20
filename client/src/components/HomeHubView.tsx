@@ -109,15 +109,13 @@ export const HomeHubView: React.FC<HomeHubViewProps> = ({
               </button>
             )}
 
-            {currentList.length > 5 && (
-              <button
-                onClick={() => setShowAllSetlists(prev => !prev)}
-                className="text-xs font-bold text-orange-500 hover:text-orange-400 flex items-center gap-1 transition-colors"
-              >
-                <span>{showAllSetlists ? 'Mostrar menos' : `Mostrar todos (${currentList.length})`}</span>
-                <ChevronRight size={14} className={showAllSetlists ? 'rotate-90' : ''} />
-              </button>
-            )}
+            <button
+              onClick={() => setShowAllSetlists(prev => !prev)}
+              className="text-xs font-bold text-orange-500 hover:text-orange-400 flex items-center gap-1 transition-colors"
+            >
+              <span>{showAllSetlists ? 'Mostrar menos' : 'Mostrar todos'}</span>
+              <ChevronRight size={14} className={showAllSetlists ? 'rotate-90' : ''} />
+            </button>
           </div>
         </div>
 
