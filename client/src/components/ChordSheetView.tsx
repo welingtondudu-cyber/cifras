@@ -105,19 +105,19 @@ export const ChordSheetView: React.FC<ChordSheetViewProps> = ({
                     {hasAnyChord ? (
                       <span
                         onClick={() => seg.chord && onSelectChord(seg.chord)}
-                        className={`font-bold transition-transform active:scale-95 ${
+                        className={`font-bold transition-transform active:scale-95 whitespace-pre ${
                           seg.chord
                             ? 'text-orange-500 hover:text-orange-400 cursor-pointer hover:underline underline-offset-2 py-0.5'
                             : 'invisible select-none'
                         }`}
                         title={seg.chord ? `Ver desenho de ${seg.chord}` : undefined}
                       >
-                        {seg.chord || '·'}
+                        {seg.chord || '\u00A0'}
                       </span>
                     ) : null}
 
                     {/* Linha da Letra */}
-                    <span className="text-zinc-200 font-sans tracking-wide leading-relaxed">
+                    <span className="text-zinc-200 font-sans tracking-wide leading-relaxed whitespace-pre">
                       {seg.text || '\u00A0'}
                     </span>
                   </div>
