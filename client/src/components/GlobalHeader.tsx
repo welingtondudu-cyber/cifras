@@ -66,12 +66,12 @@ export const GlobalHeader: React.FC<GlobalHeaderProps> = ({
             onChange={e => setSearchValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="O que você quer tocar?"
-            className="w-full bg-[#242424] hover:bg-[#2a2a2a] focus:bg-[#2c2c2c] border border-transparent focus:border-orange-500 text-white placeholder-zinc-400 text-xs sm:text-sm rounded-full pl-11 pr-10 py-2.5 transition-all outline-none"
+            className="w-full bg-[#242424] hover:bg-[#2a2a2a] focus:bg-[#262626] border border-transparent focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 text-white placeholder-zinc-400 text-sm rounded-full pl-11 pr-10 py-2.5 transition-all outline-none"
           />
           {searchValue && (
             <button
               onClick={handleClear}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white p-1 rounded-full"
             >
               <X size={15} />
             </button>
@@ -79,33 +79,33 @@ export const GlobalHeader: React.FC<GlobalHeaderProps> = ({
         </div>
 
         {/* Ações da Direita */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 sm:gap-2.5">
           <button
             onClick={onOpenNewSong}
-            className="hidden md:flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-zinc-800 hover:bg-zinc-750 text-xs font-semibold text-zinc-200 transition-colors"
+            className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-full bg-zinc-800 hover:bg-zinc-750 text-xs sm:text-sm font-semibold text-zinc-200 transition-colors active:scale-95"
           >
-            <Plus size={14} />
+            <Plus size={15} />
             <span>Nova Cifra</span>
           </button>
 
           <button
             onClick={onToggleAIPanel}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/40 text-orange-400 font-bold text-xs shadow-md transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-full bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/40 text-orange-400 font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95"
             title="Abrir assistente IA lateral"
           >
-            <Sparkles size={14} />
-            <span className="hidden sm:inline">Assistente IA</span>
+            <Sparkles size={15} />
+            <span className="hidden md:inline">Assistente IA</span>
           </button>
 
           {/* User info & Logout */}
           <div className="flex items-center gap-2 pl-2 border-l border-zinc-800">
-            <span className="hidden lg:inline text-xs text-zinc-300 font-medium">
+            <span className="hidden lg:inline text-xs sm:text-sm text-zinc-300 font-medium">
               {user?.name || 'Músico'}
             </span>
             <button
               onClick={onLogout}
               title="Sair do sistema"
-              className="p-2 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-red-400 transition-colors"
+              className="p-2 sm:p-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-red-400 transition-colors"
             >
               <LogOut size={16} />
             </button>

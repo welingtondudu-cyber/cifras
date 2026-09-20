@@ -38,19 +38,19 @@ export const StageHeader: React.FC<StageHeaderProps> = ({
   onToggleFullscreen,
 }) => {
   return (
-    <header className="h-14 bg-[#141414] border-b border-zinc-800 px-3 sm:px-5 flex items-center justify-between gap-3 text-zinc-100 select-none sticky top-0 z-30">
+    <header className="h-14 sm:h-16 bg-[#141414] border-b border-zinc-800 px-3 sm:px-6 flex items-center justify-between gap-3 text-zinc-100 select-none sticky top-0 z-30">
       {/* Botão de Voltar ao Início */}
       <div className="flex items-center gap-2">
         <button
           onClick={onBackToHome}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-850 hover:bg-zinc-800 text-xs font-semibold text-zinc-300 transition-colors"
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-850 hover:bg-zinc-800 text-xs sm:text-sm font-semibold text-zinc-300 transition-colors active:scale-95"
         >
-          <Home size={14} />
+          <Home size={15} />
           <span className="hidden sm:inline">Início</span>
         </button>
 
-        <div className="hidden md:flex items-center gap-1.5 text-xs text-zinc-400 font-mono pl-1">
-          <Music size={13} className="text-orange-500" />
+        <div className="hidden md:flex items-center gap-2 text-xs sm:text-sm text-zinc-400 font-mono pl-1">
+          <Music size={14} className="text-orange-500" />
           <span className="text-white font-bold">{currentSong.titulo}</span>
           <span>•</span>
           <span>{currentSong.artista}</span>
@@ -63,7 +63,7 @@ export const StageHeader: React.FC<StageHeaderProps> = ({
           <button
             onClick={onPrevSong}
             disabled={songIndexInSetlist <= 0}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-zinc-300 hover:text-white hover:bg-zinc-750 disabled:opacity-30 transition-all"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs sm:text-[13px] font-bold text-zinc-300 hover:text-white hover:bg-zinc-750 disabled:opacity-30 transition-all active:scale-95"
             title="Música anterior do repertório"
           >
             <ChevronLeft size={16} />
@@ -71,10 +71,10 @@ export const StageHeader: React.FC<StageHeaderProps> = ({
           </button>
 
           <div className="px-3 text-center border-x border-zinc-750 min-w-[140px] sm:min-w-[180px]">
-            <div className="text-[10px] uppercase tracking-wider text-orange-400 font-bold font-mono">
+            <div className="text-[10px] sm:text-[11px] uppercase tracking-wider text-orange-400 font-bold font-mono">
               {currentSetlist.nome} ({songIndexInSetlist + 1}/{totalSongsInSetlist})
             </div>
-            <div className="text-xs font-black text-white truncate max-w-[160px] sm:max-w-[200px]">
+            <div className="text-xs sm:text-sm font-black text-white truncate max-w-[160px] sm:max-w-[200px]">
               {currentSong.titulo}
             </div>
           </div>
@@ -82,7 +82,7 @@ export const StageHeader: React.FC<StageHeaderProps> = ({
           <button
             onClick={onNextSong}
             disabled={songIndexInSetlist >= totalSongsInSetlist - 1}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-zinc-300 hover:text-white hover:bg-zinc-750 disabled:opacity-30 transition-all"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs sm:text-[13px] font-bold text-zinc-300 hover:text-white hover:bg-zinc-750 disabled:opacity-30 transition-all active:scale-95"
             title="Próxima música do repertório"
           >
             <span className="hidden sm:inline">Próxima</span>
@@ -95,21 +95,21 @@ export const StageHeader: React.FC<StageHeaderProps> = ({
       <div className="flex items-center gap-2">
         <button
           onClick={onToggleAIPanel}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 ${
+          className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md active:scale-95 ${
             isAIPanelOpen
-              ? 'bg-orange-500 text-white'
+              ? 'bg-orange-500 text-white shadow-orange-500/20'
               : 'bg-zinc-850 hover:bg-zinc-800 text-zinc-300 border border-zinc-750'
           }`}
           title="Abrir ou ocultar painel de IA lateral"
         >
-          <Sparkles size={14} className={isAIPanelOpen ? 'animate-pulse' : ''} />
+          <Sparkles size={15} className={isAIPanelOpen ? 'animate-pulse' : ''} />
           <span className="hidden sm:inline">Assistente IA</span>
         </button>
 
         <button
           onClick={onToggleFullscreen}
           title={isFullscreen ? 'Sair da Tela Cheia' : 'Modo Palco Fullscreen'}
-          className="p-2 rounded-xl bg-zinc-850 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+          className="p-2 sm:p-2.5 rounded-xl bg-zinc-850 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
         >
           {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
         </button>

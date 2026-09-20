@@ -94,27 +94,27 @@ export const HomeHubView: React.FC<HomeHubViewProps> = ({
             </span>
           </h2>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {archivedSetlists.length > 0 && (
               <button
                 onClick={() => {
                   setViewArchived(prev => !prev);
                   setShowAllSetlists(false);
                 }}
-                className="text-xs font-semibold text-zinc-400 hover:text-orange-400 flex items-center gap-1 transition-colors"
+                className="text-xs sm:text-sm font-semibold text-zinc-400 hover:text-orange-400 flex items-center gap-1.5 transition-colors py-1 px-2 rounded-lg hover:bg-zinc-850"
                 title={viewArchived ? 'Ver repertórios ativos' : 'Ver repertórios arquivados'}
               >
-                <Archive size={14} />
+                <Archive size={15} />
                 <span>{viewArchived ? 'Ver Ativos' : `Arquivados (${archivedSetlists.length})`}</span>
               </button>
             )}
 
             <button
               onClick={() => setShowAllSetlists(prev => !prev)}
-              className="text-xs font-bold text-orange-500 hover:text-orange-400 flex items-center gap-1 transition-colors"
+              className="text-xs sm:text-sm font-bold text-orange-500 hover:text-orange-400 flex items-center gap-1 transition-colors py-1 px-2 rounded-lg hover:bg-orange-500/10"
             >
               <span>{showAllSetlists ? 'Mostrar menos' : 'Mostrar todos'}</span>
-              <ChevronRight size={14} className={showAllSetlists ? 'rotate-90' : ''} />
+              <ChevronRight size={15} className={showAllSetlists ? 'rotate-90' : ''} />
             </button>
           </div>
         </div>
@@ -131,11 +131,11 @@ export const HomeHubView: React.FC<HomeHubViewProps> = ({
                 setlist.cover_gradient || (idx % 2 === 0 ? 'from-orange-500 to-amber-700' : 'from-zinc-800 to-zinc-900')
               } p-4 flex flex-col justify-between shadow-lg relative overflow-hidden group-hover:ring-2 group-hover:ring-orange-500 transition-all`}>
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-black/40 text-white backdrop-blur-sm flex items-center gap-1">
-                    {setlist.publico ? <Globe size={10} /> : <Lock size={10} />}
+                  <span className="text-[10px] sm:text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-black/40 text-white backdrop-blur-sm flex items-center gap-1 font-semibold">
+                    {setlist.publico ? <Globe size={11} /> : <Lock size={11} />}
                     {setlist.publico ? 'Público' : 'Privado'}
                   </span>
-                  <ListMusic size={16} className="text-white/80" />
+                  <ListMusic size={17} className="text-white/80" />
                 </div>
 
                 <div>
@@ -146,7 +146,7 @@ export const HomeHubView: React.FC<HomeHubViewProps> = ({
               </div>
 
               <div className="mt-2">
-                <span className="block text-xs font-bold text-zinc-200 group-hover:text-orange-400 transition-colors truncate">
+                <span className="block text-xs sm:text-[13px] font-bold text-zinc-200 group-hover:text-orange-400 transition-colors truncate">
                   {setlist.nome}
                 </span>
                 <span className="text-[11px] text-zinc-400">
@@ -162,10 +162,10 @@ export const HomeHubView: React.FC<HomeHubViewProps> = ({
               onClick={onCreateNewSetlist}
               className="aspect-square w-full rounded-2xl border-2 border-dashed border-zinc-800 hover:border-orange-500 bg-[#181818]/60 hover:bg-orange-500/5 cursor-pointer flex flex-col items-center justify-center p-4 text-center transition-all group"
             >
-              <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-orange-500 group-hover:text-white text-zinc-400 flex items-center justify-center transition-colors mb-2">
+              <div className="w-11 h-11 rounded-full bg-zinc-800 group-hover:bg-orange-500 group-hover:text-white text-zinc-400 flex items-center justify-center transition-colors mb-2 shadow-sm">
                 <Plus size={20} />
               </div>
-              <span className="text-xs font-bold text-zinc-300 group-hover:text-orange-400">Novo Repertório</span>
+              <span className="text-xs sm:text-[13px] font-bold text-zinc-300 group-hover:text-orange-400">Novo Repertório</span>
               <span className="text-[10px] text-zinc-500 mt-0.5">Público ou Privado</span>
             </div>
           )}
@@ -186,7 +186,7 @@ export const HomeHubView: React.FC<HomeHubViewProps> = ({
             <button
               key={style}
               onClick={() => onNavigateToSongsList({ style })}
-              className="px-5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap bg-[#181818] hover:bg-orange-500 hover:text-white text-zinc-300 border border-zinc-800 transition-all shadow-md active:scale-95"
+              className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap bg-[#181818] hover:bg-orange-500 hover:text-white text-zinc-300 border border-zinc-800 transition-all shadow-md active:scale-95"
             >
               {style}
             </button>
@@ -204,10 +204,10 @@ export const HomeHubView: React.FC<HomeHubViewProps> = ({
 
           <button
             onClick={() => onNavigateToSongsList({})}
-            className="text-xs font-bold text-orange-500 hover:text-orange-400 flex items-center gap-1 transition-colors"
+            className="text-xs sm:text-sm font-bold text-orange-500 hover:text-orange-400 flex items-center gap-1 transition-colors py-1 px-2 rounded-lg hover:bg-orange-500/10"
           >
             <span>Mostrar todos</span>
-            <ChevronRight size={14} />
+            <ChevronRight size={15} />
           </button>
         </div>
 

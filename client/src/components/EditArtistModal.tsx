@@ -96,25 +96,25 @@ export const EditArtistModal: React.FC<EditArtistModalProps> = ({
             <button
               type="button"
               onClick={() => setActiveTab('upload')}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+              className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-all ${
                 activeTab === 'upload'
                   ? 'bg-orange-500 text-white shadow'
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
-              <Upload size={13} />
+              <Upload size={14} />
               <span>Enviar Arquivo</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('url')}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+              className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-all ${
                 activeTab === 'url'
                   ? 'bg-orange-500 text-white shadow'
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
-              <Link size={13} />
+              <Link size={14} />
               <span>Colar Link (URL)</span>
             </button>
           </div>
@@ -132,13 +132,13 @@ export const EditArtistModal: React.FC<EditArtistModalProps> = ({
                 onChange={handleFileChange}
                 className="hidden"
               />
-              <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-orange-500 group-hover:text-white text-zinc-400 flex items-center justify-center transition-colors">
+              <div className="w-11 h-11 rounded-full bg-zinc-800 group-hover:bg-orange-500 group-hover:text-white text-zinc-400 flex items-center justify-center transition-colors">
                 <Upload size={18} />
               </div>
-              <span className="text-xs font-bold text-white">
+              <span className="text-xs sm:text-sm font-bold text-white">
                 Clique para selecionar uma foto do seu computador
               </span>
-              <span className="text-[10px] text-zinc-500">
+              <span className="text-[11px] text-zinc-500">
                 Suporta PNG, JPG, JPEG ou WEBP
               </span>
             </div>
@@ -153,12 +153,12 @@ export const EditArtistModal: React.FC<EditArtistModalProps> = ({
                   value={urlInput}
                   onChange={e => setUrlInput(e.target.value)}
                   placeholder="https://exemplo.com/foto-artista.jpg"
-                  className="flex-1 bg-[#121212] border border-zinc-750 text-white text-xs rounded-xl px-3 py-2.5 focus:border-orange-500 outline-none"
+                  className="flex-1 bg-[#121212] border border-zinc-750 text-white text-sm rounded-xl px-3.5 py-2.5 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none transition-colors"
                 />
                 <button
                   type="button"
                   onClick={handleApplyUrl}
-                  className="px-3 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold"
+                  className="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs sm:text-sm font-bold transition-colors"
                 >
                   Carregar
                 </button>
@@ -168,20 +168,20 @@ export const EditArtistModal: React.FC<EditArtistModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-[#141414] border-t border-zinc-800 flex items-center justify-end gap-2">
+        <div className="p-4 bg-[#141414] border-t border-zinc-800 flex items-center justify-end gap-2.5">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold text-zinc-400 hover:text-white"
+            className="px-4 py-2.5 text-xs sm:text-sm font-semibold text-zinc-400 hover:text-white transition-colors"
           >
             Cancelar
           </button>
           <button
             type="button"
             onClick={handleSave}
-            className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-lg shadow-orange-500/20 active:scale-95 transition-all"
+            className="flex items-center gap-1.5 px-6 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs sm:text-sm shadow-lg shadow-orange-500/20 active:scale-95 transition-all"
           >
-            <Check size={14} />
+            <Check size={15} />
             <span>Salvar Foto</span>
           </button>
         </div>

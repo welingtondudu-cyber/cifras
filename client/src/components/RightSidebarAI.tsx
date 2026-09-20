@@ -370,7 +370,7 @@ export const RightSidebarAI: React.FC<RightSidebarAIProps> = ({
             )}
 
             <div
-              className={`max-w-[85%] rounded-2xl p-3.5 text-xs leading-relaxed ${
+              className={`max-w-[85%] rounded-2xl p-3.5 text-xs sm:text-[13px] leading-relaxed ${
                 msg.sender === 'user'
                   ? 'bg-orange-500 text-white font-medium rounded-tr-sm'
                   : 'bg-[#1f1f1f] text-zinc-200 border border-zinc-800 rounded-tl-sm'
@@ -386,9 +386,9 @@ export const RightSidebarAI: React.FC<RightSidebarAIProps> = ({
                   {msg.action.type === 'create_setlist' && (
                     <div className="space-y-2">
                       {msg.action.payload?.preview && (
-                        <div className="p-2.5 bg-black/40 rounded-lg border border-zinc-750 text-[11px] text-zinc-300 font-mono leading-relaxed">
-                          <div className="text-[10px] text-orange-400 font-bold uppercase mb-1 flex items-center gap-1.5">
-                            <ListPlus size={12} />
+                        <div className="p-2.5 bg-black/40 rounded-xl border border-zinc-750 text-xs text-zinc-300 font-mono leading-relaxed">
+                          <div className="text-[11px] text-orange-400 font-bold uppercase mb-1 flex items-center gap-1.5">
+                            <ListPlus size={13} />
                             <span>Músicas Selecionadas ({msg.action.payload.songIds.length}):</span>
                           </div>
                           <div className="text-zinc-200">{msg.action.payload.preview}</div>
@@ -414,9 +414,9 @@ export const RightSidebarAI: React.FC<RightSidebarAIProps> = ({
                             )
                           );
                         }}
-                        className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-md transition-all active:scale-95 text-center"
+                        className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95 text-center"
                       >
-                        <ListPlus size={14} />
+                        <ListPlus size={15} />
                         {msg.action.title}
                       </button>
                     </div>
@@ -425,9 +425,9 @@ export const RightSidebarAI: React.FC<RightSidebarAIProps> = ({
                   {msg.action.type === 'reorder_setlist' && (
                     <div className="space-y-2">
                       {msg.action.payload?.preview && (
-                        <div className="p-2.5 bg-black/40 rounded-lg border border-zinc-750 text-[11px] text-zinc-300 font-mono leading-relaxed">
-                          <div className="text-[10px] text-orange-400 font-bold uppercase mb-1 flex items-center gap-1.5">
-                            <Sparkles size={11} />
+                        <div className="p-2.5 bg-black/40 rounded-xl border border-zinc-750 text-xs text-zinc-300 font-mono leading-relaxed">
+                          <div className="text-[11px] text-orange-400 font-bold uppercase mb-1 flex items-center gap-1.5">
+                            <Sparkles size={13} />
                             <span>Sequência Harmônica Proposta:</span>
                           </div>
                           <div className="text-zinc-200 leading-snug">
@@ -452,9 +452,9 @@ export const RightSidebarAI: React.FC<RightSidebarAIProps> = ({
                             )
                           );
                         }}
-                        className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-md transition-all active:scale-95"
+                        className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95"
                       >
-                        <ArrowUpDown size={14} />
+                        <ArrowUpDown size={15} />
                         {msg.action.title}
                       </button>
                     </div>
@@ -474,7 +474,7 @@ export const RightSidebarAI: React.FC<RightSidebarAIProps> = ({
       </div>
 
       {/* Sugestões Rápidas de Prompt */}
-      <div className="p-2.5 bg-[#1a1a1a] border-t border-zinc-800 flex gap-1.5 overflow-x-auto scrollbar-none">
+      <div className="p-2.5 bg-[#1a1a1a] border-t border-zinc-800 flex gap-2 overflow-x-auto scrollbar-none">
         {screenView === 'setlist' ? (
           <>
             <button
@@ -483,13 +483,13 @@ export const RightSidebarAI: React.FC<RightSidebarAIProps> = ({
                   'Reordene as músicas deste repertório para criar uma transição harmônica suave e perfeita para o show'
                 )
               }
-              className="text-[11px] px-2.5 py-1 rounded-full bg-orange-500/20 text-orange-400 font-semibold border border-orange-500/40 hover:bg-orange-500/30 whitespace-nowrap"
+              className="text-xs px-3 py-1.5 rounded-full bg-orange-500/20 text-orange-400 font-semibold border border-orange-500/40 hover:bg-orange-500/30 whitespace-nowrap transition-colors"
             >
               ⚡ Otimizar Ordem Harmônica
             </button>
             <button
               onClick={() => handleSend('Sugira 2 músicas que combinem com este repertório')}
-              className="text-[11px] px-2.5 py-1 rounded-full bg-zinc-800 hover:bg-zinc-750 text-zinc-300 whitespace-nowrap border border-zinc-700"
+              className="text-xs px-3 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-750 text-zinc-300 whitespace-nowrap border border-zinc-700 transition-colors"
             >
               + Sugerir Músicas
             </button>
@@ -498,13 +498,13 @@ export const RightSidebarAI: React.FC<RightSidebarAIProps> = ({
           <>
             <button
               onClick={() => handleSend('Sugira um repertório temático de Samba e Pagode')}
-              className="text-[11px] px-2.5 py-1 rounded-full bg-orange-500/20 text-orange-400 font-semibold border border-orange-500/40 hover:bg-orange-500/30 whitespace-nowrap"
+              className="text-xs px-3 py-1.5 rounded-full bg-orange-500/20 text-orange-400 font-semibold border border-orange-500/40 hover:bg-orange-500/30 whitespace-nowrap transition-colors"
             >
               + Repertório de Samba
             </button>
             <button
               onClick={() => handleSend('Sugira um repertório para show acústico de Voz e Violão')}
-              className="text-[11px] px-2.5 py-1 rounded-full bg-zinc-800 hover:bg-zinc-750 text-zinc-300 whitespace-nowrap border border-zinc-700"
+              className="text-xs px-3 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-750 text-zinc-300 whitespace-nowrap border border-zinc-700 transition-colors"
             >
               Show Acústico
             </button>
@@ -513,13 +513,13 @@ export const RightSidebarAI: React.FC<RightSidebarAIProps> = ({
           <>
             <button
               onClick={() => handleSend('Dica de substituição harmônica para esta música')}
-              className="text-[11px] px-2.5 py-1 rounded-full bg-zinc-800 hover:bg-zinc-750 text-zinc-300 whitespace-nowrap border border-zinc-700"
+              className="text-xs px-3 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-750 text-zinc-300 whitespace-nowrap border border-zinc-700 transition-colors"
             >
               Substituição Harmônica
             </button>
             <button
               onClick={() => handleSend('Como tocar esse refrão no Cavaco?')}
-              className="text-[11px] px-2.5 py-1 rounded-full bg-zinc-800 hover:bg-zinc-750 text-zinc-300 whitespace-nowrap border border-zinc-700"
+              className="text-xs px-3 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-750 text-zinc-300 whitespace-nowrap border border-zinc-700 transition-colors"
             >
               Dica Cavaco
             </button>
@@ -541,7 +541,7 @@ export const RightSidebarAI: React.FC<RightSidebarAIProps> = ({
           }}
           rows={1}
           placeholder="Pergunte à IA, peça um repertório ou tire dúvidas... (Shift+Enter pula linha)"
-          className="flex-1 bg-[#222] border border-zinc-700 text-white placeholder-zinc-500 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-orange-500 resize-none min-h-[42px] max-h-32 overflow-y-auto leading-relaxed scrollbar-thin scrollbar-thumb-zinc-700 whitespace-pre-wrap break-words"
+          className="flex-1 bg-[#222] border border-zinc-700 text-white placeholder-zinc-500 text-sm rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 resize-none min-h-[44px] max-h-32 overflow-y-auto leading-relaxed scrollbar-thin scrollbar-thumb-zinc-700 whitespace-pre-wrap break-words transition-colors"
           style={{ height: 'auto' }}
           onInput={e => {
             const target = e.target as HTMLTextAreaElement;
@@ -552,9 +552,9 @@ export const RightSidebarAI: React.FC<RightSidebarAIProps> = ({
         <button
           onClick={() => handleSend()}
           disabled={!input.trim() || isStreaming}
-          className="p-2.5 h-[42px] w-[42px] flex items-center justify-center rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white shadow-md active:scale-95 transition-all shrink-0"
+          className="p-2.5 h-[44px] w-[44px] flex items-center justify-center rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white shadow-md active:scale-95 transition-all shrink-0"
         >
-          <Send size={15} />
+          <Send size={16} />
         </button>
       </div>
     </aside>

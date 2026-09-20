@@ -29,9 +29,9 @@ export const ChordDictionaryModal: React.FC<ChordDictionaryModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
       <div className="bg-[#181818] border border-zinc-800 rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="p-4 bg-[#141414] border-b border-zinc-800 flex items-center justify-between">
+        <div className="p-4 sm:p-5 bg-[#141414] border-b border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-orange-500/15 text-orange-500 border border-orange-500/30">
+            <div className="p-2 rounded-xl bg-orange-500/15 text-orange-500 border border-orange-500/30 shrink-0">
               <Guitar size={20} />
             </div>
             <div>
@@ -46,16 +46,16 @@ export const ChordDictionaryModal: React.FC<ChordDictionaryModalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-end sm:self-auto">
             <button
               onClick={onToggleInstrument}
-              className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 text-xs font-semibold text-orange-400 transition-colors"
+              className="px-3.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 text-xs sm:text-[13px] font-semibold text-orange-400 transition-all active:scale-95 shadow-sm"
             >
               Mudar para {instrument === 'cavaco' ? 'Violão' : 'Cavaco'}
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+              className="p-2 rounded-xl hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
             >
               <X size={20} />
             </button>

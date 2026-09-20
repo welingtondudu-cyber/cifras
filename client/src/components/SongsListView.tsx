@@ -114,12 +114,12 @@ export const SongsListView: React.FC<SongsListViewProps> = ({
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Pesquisar por nome da música ou cantor (ex: Cartola, Moinho, Alcione)..."
-          className="w-full bg-[#181818] border border-zinc-750 focus:border-orange-500 text-white placeholder-zinc-500 text-xs sm:text-sm rounded-2xl pl-11 pr-10 py-3 outline-none shadow-lg transition-colors"
+          className="w-full bg-[#181818] border border-zinc-750 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 text-white placeholder-zinc-500 text-sm rounded-2xl pl-11 pr-10 py-3 outline-none shadow-lg transition-colors"
         />
         {search && (
           <button
             onClick={() => setSearch('')}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white p-1 rounded-full"
           >
             <X size={16} />
           </button>
@@ -140,7 +140,7 @@ export const SongsListView: React.FC<SongsListViewProps> = ({
               <div
                 key={s.id}
                 onClick={() => onSelectSetlist(s)}
-                className="p-3 bg-[#181818] hover:bg-[#222222] border border-zinc-800 hover:border-orange-500/60 rounded-xl cursor-pointer transition-all flex flex-col justify-between group"
+                className="p-3.5 bg-[#181818] hover:bg-[#222222] border border-zinc-800 hover:border-orange-500/60 rounded-xl cursor-pointer transition-all flex flex-col justify-between group"
               >
                 <div className="flex items-center justify-between text-zinc-400 text-[10px] mb-2 font-mono">
                   <span className="flex items-center gap-1">
@@ -164,16 +164,16 @@ export const SongsListView: React.FC<SongsListViewProps> = ({
       {/* Se houver pesquisa ativa e encontrar Artistas correspondentes */}
       {matchingArtists.length > 0 && (
         <div className="mb-6 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold text-zinc-400 flex items-center gap-1">
-            <User size={13} /> Artistas encontrados:
+          <span className="text-xs sm:text-sm font-semibold text-zinc-400 flex items-center gap-1">
+            <User size={14} /> Artistas encontrados:
           </span>
           {matchingArtists.map(art => (
             <button
               key={art}
               onClick={() => setSelectedArtist(art === selectedArtist ? null : art)}
-              className={`text-xs px-3 py-1 rounded-full border transition-all ${
+              className={`text-xs sm:text-[13px] px-3.5 py-1.5 rounded-full border transition-all ${
                 selectedArtist === art
-                  ? 'bg-orange-500 text-white border-orange-500 font-bold'
+                  ? 'bg-orange-500 text-white border-orange-500 font-bold shadow-sm'
                   : 'bg-zinc-850 hover:bg-zinc-800 text-zinc-300 border-zinc-750'
               }`}
             >
@@ -184,14 +184,14 @@ export const SongsListView: React.FC<SongsListViewProps> = ({
       )}
 
       {/* Seletor de Estilos em Abas */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-6 scrollbar-none border-b border-zinc-800">
+      <div className="flex items-center gap-2.5 overflow-x-auto pb-4 mb-6 scrollbar-none border-b border-zinc-800">
         {ALL_STYLES.map(st => {
           const isSelected = selectedStyle === st || (!selectedStyle && st === 'Todos');
           return (
             <button
               key={st}
               onClick={() => setSelectedStyle(st === 'Todos' ? null : st)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+              className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all active:scale-95 ${
                 isSelected
                   ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
                   : 'bg-[#181818] hover:bg-zinc-800 text-zinc-300 border border-zinc-800'

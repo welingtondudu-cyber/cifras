@@ -105,24 +105,24 @@ export const SetlistDetailView: React.FC<SetlistDetailViewProps> = ({
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 text-zinc-100 pb-20">
       {/* Barra de Retorno e Ações */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <button
           onClick={onBack}
-          className="flex items-center gap-1.5 text-xs font-semibold text-zinc-400 hover:text-white transition-colors"
+          className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-zinc-400 hover:text-white transition-colors self-start py-1"
         >
           <ArrowLeft size={16} />
           <span>Voltar para Listas</span>
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center flex-wrap gap-2">
           {/* Botão de Ordenação Inteligente por IA */}
           {onRequestAIReorder && setlist.itens.length > 1 && (
             <button
               onClick={onRequestAIReorder}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-orange-500/25 to-amber-500/20 text-orange-400 border border-orange-500/40 text-xs font-bold hover:bg-orange-500/30 transition-all active:scale-95 shadow-sm"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-orange-500/25 to-amber-500/20 text-orange-400 border border-orange-500/40 text-xs sm:text-[13px] font-bold hover:bg-orange-500/30 transition-all active:scale-95 shadow-sm"
               title="Pedir à IA para organizar a sequência harmônica ideal das músicas"
             >
-              <Sparkles size={13} className="text-orange-400 animate-pulse" />
+              <Sparkles size={14} className="text-orange-400 animate-pulse" />
               <span>Ordenar com IA</span>
             </button>
           )}
@@ -130,7 +130,7 @@ export const SetlistDetailView: React.FC<SetlistDetailViewProps> = ({
           {/* Acesso ao Chat IA para editar repertório */}
           <button
             onClick={onToggleAIPanel}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500/20 text-orange-400 border border-orange-500/40 text-xs font-bold hover:bg-orange-500/30 transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-orange-500/20 text-orange-400 border border-orange-500/40 text-xs sm:text-[13px] font-bold hover:bg-orange-500/30 transition-all active:scale-95"
           >
             <Sparkles size={14} />
             <span>Editar com IA</span>
@@ -138,13 +138,13 @@ export const SetlistDetailView: React.FC<SetlistDetailViewProps> = ({
 
           <button
             onClick={onTogglePrivacy}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-[13px] font-semibold border transition-all ${
               setlist.publico
                 ? 'bg-zinc-800 text-orange-400 border-orange-500/40'
                 : 'bg-zinc-800 text-zinc-300 border-zinc-700'
             }`}
           >
-            {setlist.publico ? <Globe size={13} /> : <Lock size={13} />}
+            {setlist.publico ? <Globe size={14} /> : <Lock size={14} />}
             <span>{setlist.publico ? 'Público (Banda)' : 'Privado'}</span>
           </button>
 
@@ -152,13 +152,13 @@ export const SetlistDetailView: React.FC<SetlistDetailViewProps> = ({
             <button
               onClick={onToggleArchive}
               title={setlist.arquivado ? 'Desarquivar repertório' : 'Arquivar repertório'}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-[13px] font-semibold border transition-all ${
                 setlist.arquivado
                   ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
                   : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200 border-zinc-700'
               }`}
             >
-              {setlist.arquivado ? <ArchiveRestore size={13} /> : <Archive size={13} />}
+              {setlist.arquivado ? <ArchiveRestore size={14} /> : <Archive size={14} />}
               <span>{setlist.arquivado ? 'Desarquivar' : 'Arquivar'}</span>
             </button>
           )}
@@ -169,7 +169,7 @@ export const SetlistDetailView: React.FC<SetlistDetailViewProps> = ({
               alert('Link do repertório copiado para a área de transferência!');
             }}
             title="Compartilhar repertório"
-            className="p-2 rounded-lg bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+            className="p-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-750 text-zinc-400 hover:text-white transition-colors"
           >
             <Share2 size={16} />
           </button>
@@ -202,21 +202,21 @@ export const SetlistDetailView: React.FC<SetlistDetailViewProps> = ({
                   value={editName}
                   onChange={e => setEditName(e.target.value)}
                   placeholder="Nome do repertório..."
-                  className="w-full bg-[#141414] border border-orange-500 rounded-lg px-3 py-1.5 text-base font-bold text-white outline-none"
+                  className="w-full bg-[#141414] border border-orange-500 rounded-xl px-3.5 py-2 text-base font-bold text-white outline-none focus:ring-1 focus:ring-orange-500/30"
                 />
                 <input
                   type="text"
                   value={editDesc}
                   onChange={e => setEditDesc(e.target.value)}
                   placeholder="Descrição ou observações..."
-                  className="w-full bg-[#141414] border border-zinc-700 rounded-lg px-3 py-1 text-xs text-zinc-300 outline-none"
+                  className="w-full bg-[#141414] border border-zinc-700 rounded-xl px-3.5 py-2 text-sm text-zinc-300 outline-none focus:border-orange-500"
                 />
                 <div className="flex items-center gap-2 pt-1">
                   <button
                     onClick={handleSaveHeader}
-                    className="flex items-center gap-1 px-3 py-1 bg-orange-500 text-white rounded-md text-xs font-bold hover:bg-orange-600"
+                    className="flex items-center gap-1.5 px-4 py-2 bg-orange-500 text-white rounded-xl text-xs sm:text-sm font-bold hover:bg-orange-600 shadow-md transition-all active:scale-95"
                   >
-                    <Check size={13} /> Salvar
+                    <Check size={14} /> Salvar
                   </button>
                   <button
                     onClick={() => {
@@ -224,9 +224,9 @@ export const SetlistDetailView: React.FC<SetlistDetailViewProps> = ({
                       setEditDesc(setlist.descricao || '');
                       setIsEditingHeader(false);
                     }}
-                    className="flex items-center gap-1 px-3 py-1 bg-zinc-800 text-zinc-300 rounded-md text-xs hover:bg-zinc-700"
+                    className="flex items-center gap-1.5 px-4 py-2 bg-zinc-800 text-zinc-300 rounded-xl text-xs sm:text-sm font-semibold hover:bg-zinc-700 transition-colors"
                   >
-                    <X size={13} /> Cancelar
+                    <X size={14} /> Cancelar
                   </button>
                 </div>
               </div>
@@ -240,13 +240,13 @@ export const SetlistDetailView: React.FC<SetlistDetailViewProps> = ({
                     <button
                       onClick={() => setIsEditingHeader(true)}
                       title="Editar nome e descrição do repertório"
-                      className="p-1 rounded text-zinc-400 hover:text-orange-400 hover:bg-zinc-800 transition-colors"
+                      className="p-1.5 rounded-lg text-zinc-400 hover:text-orange-400 hover:bg-zinc-800 transition-colors"
                     >
                       <Edit2 size={16} />
                     </button>
                   )}
                 </div>
-                <p className="text-xs text-zinc-400 mt-1">
+                <p className="text-xs sm:text-sm text-zinc-400 mt-1">
                   Criado por <span className="text-zinc-200 font-semibold">{setlist.owner_name || 'Welington_sc'}</span>
                   {setlist.descricao ? ` • ${setlist.descricao}` : ''}
                 </p>
@@ -255,21 +255,21 @@ export const SetlistDetailView: React.FC<SetlistDetailViewProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 w-full sm:w-auto">
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs transition-colors"
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs sm:text-sm transition-colors active:scale-95"
           >
-            <Plus size={15} />
+            <Plus size={16} />
             <span>Adicionar Cifra</span>
           </button>
 
           <button
             onClick={() => onPlaySetlist(0)}
             disabled={setlist.itens.length === 0}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white font-extrabold text-xs shadow-lg shadow-orange-500/20 active:scale-95 transition-all"
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white font-extrabold text-xs sm:text-sm tracking-wide shadow-lg shadow-orange-500/20 active:scale-95 transition-all"
           >
-            <Play size={15} fill="currentColor" />
+            <Play size={16} fill="currentColor" />
             <span>TOCAR NO PALCO</span>
           </button>
         </div>
@@ -333,7 +333,7 @@ export const SetlistDetailView: React.FC<SetlistDetailViewProps> = ({
                     {(idx + 1).toString().padStart(2, '0')}
                   </span>
 
-                  <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center font-mono font-bold text-xs text-orange-400 shrink-0 border border-zinc-750">
+                  <div className="w-9 h-9 rounded-xl bg-zinc-800 flex items-center justify-center font-mono font-bold text-xs sm:text-[13px] text-orange-400 shrink-0 border border-zinc-750 shadow-inner">
                     {song.tom_original}
                   </div>
 
@@ -341,12 +341,12 @@ export const SetlistDetailView: React.FC<SetlistDetailViewProps> = ({
                     onClick={() => onSelectSongDirectly(song, idx)}
                     className="min-w-0 flex-1 cursor-pointer"
                   >
-                    <div className="text-sm font-bold text-white hover:text-orange-400 transition-colors truncate">
+                    <div className="text-sm sm:text-[15px] font-bold text-white hover:text-orange-400 transition-colors truncate">
                       {song.titulo}
                     </div>
-                    <div className="text-xs text-zinc-400 flex items-center gap-2 truncate">
+                    <div className="text-xs text-zinc-400 flex items-center gap-2 truncate mt-0.5">
                       <span>{song.artista}</span>
-                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-300 font-mono">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-zinc-800 text-zinc-300 font-mono">
                         {song.estilo}
                       </span>
                     </div>
@@ -357,7 +357,7 @@ export const SetlistDetailView: React.FC<SetlistDetailViewProps> = ({
                 <button
                   onClick={() => onRemoveItem(item.id)}
                   title="Remover do repertório"
-                  className="p-2 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                  className="p-2 sm:p-2.5 rounded-xl text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -370,30 +370,30 @@ export const SetlistDetailView: React.FC<SetlistDetailViewProps> = ({
       {/* Modal de Adicionar Músicas com Pesquisa Parcial */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-[#1c1c1c] border border-zinc-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl flex flex-col max-h-[85vh]">
+          <div className="bg-[#1c1c1c] border border-zinc-800 rounded-2xl w-full max-w-lg p-5 sm:p-6 shadow-2xl flex flex-col max-h-[85vh]">
             <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
               <h3 className="text-base font-bold text-white">Adicionar Cifras ao Repertório</h3>
-              <button onClick={() => setIsAddModalOpen(false)} className="text-zinc-400 hover:text-white">
+              <button onClick={() => setIsAddModalOpen(false)} className="p-1 rounded-lg text-zinc-400 hover:text-white transition-colors">
                 <X size={20} />
               </button>
             </div>
 
             {/* Campo de Busca por Música ou Autor */}
             <div className="mt-4 mb-3 relative">
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+              <Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
               <input
                 type="text"
                 value={addSongSearch}
                 onChange={e => setAddSongSearch(e.target.value)}
                 placeholder="Pesquisar por música ou autor (busca parcial)..."
-                className="w-full bg-[#121212] border border-zinc-750 focus:border-orange-500 text-white text-xs rounded-xl pl-10 pr-3 py-2.5 outline-none"
+                className="w-full bg-[#121212] border border-zinc-750 focus:border-orange-500 text-white text-sm rounded-xl pl-10 pr-4 py-2.5 outline-none focus:ring-1 focus:ring-orange-500/30 transition-colors"
               />
             </div>
 
             {/* Lista de Músicas com 1 Clique para Adicionar */}
-            <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
               {availableToAdd.length === 0 ? (
-                <div className="text-center py-8 text-xs text-zinc-500">
+                <div className="text-center py-8 text-xs sm:text-sm text-zinc-500">
                   Nenhuma música disponível encontrada.
                 </div>
               ) : (
@@ -401,19 +401,19 @@ export const SetlistDetailView: React.FC<SetlistDetailViewProps> = ({
                   <div
                     key={song.id}
                     onClick={() => onAddSongToSetlist(song.id)}
-                    className="p-2.5 bg-zinc-900/60 hover:bg-zinc-800 border border-zinc-800 rounded-xl flex items-center justify-between cursor-pointer group transition-colors"
+                    className="p-3 bg-zinc-900/60 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 rounded-xl flex items-center justify-between cursor-pointer group transition-colors"
                   >
                     <div>
-                      <div className="text-xs font-bold text-white group-hover:text-orange-400">
+                      <div className="text-sm font-semibold text-white group-hover:text-orange-400 transition-colors">
                         {song.titulo}
                       </div>
-                      <div className="text-[11px] text-zinc-400">
+                      <div className="text-xs text-zinc-400 mt-0.5">
                         {song.artista} • {song.estilo} ({song.tom_original})
                       </div>
                     </div>
 
-                    <div className="p-1.5 rounded-lg bg-orange-500/20 text-orange-400 group-hover:bg-orange-500 group-hover:text-white transition-colors">
-                      <Plus size={14} />
+                    <div className="p-2 rounded-lg bg-orange-500/20 text-orange-400 group-hover:bg-orange-500 group-hover:text-white transition-colors">
+                      <Plus size={15} />
                     </div>
                   </div>
                 ))
@@ -423,7 +423,7 @@ export const SetlistDetailView: React.FC<SetlistDetailViewProps> = ({
             <div className="pt-4 mt-2 border-t border-zinc-800 flex justify-end">
               <button
                 onClick={() => setIsAddModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-bold text-white"
+                className="px-5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs sm:text-sm font-bold text-white transition-colors"
               >
                 Concluir
               </button>

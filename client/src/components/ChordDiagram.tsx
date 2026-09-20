@@ -27,8 +27,8 @@ export const ChordDiagram: React.FC<ChordDiagramProps> = ({
   const maxFret = positiveFrets.length > 0 ? Math.max(...positiveFrets) : 4;
   const baseFret = maxFret > 4 ? minFret : 1;
 
-  const width = size === 'sm' ? 88 : size === 'lg' ? 160 : 116;
-  const height = size === 'sm' ? 104 : size === 'lg' ? 190 : 140;
+  const width = size === 'sm' ? 100 : size === 'lg' ? 160 : 124;
+  const height = size === 'sm' ? 118 : size === 'lg' ? 190 : 144;
   const padX = 18;
   const padTop = 24;
   const padBottom = 14;
@@ -42,12 +42,12 @@ export const ChordDiagram: React.FC<ChordDiagramProps> = ({
   return (
     <div
       onClick={onClick}
-      className="flex flex-col items-center bg-[#181818] border border-zinc-800 rounded-xl p-2 shadow-md hover:border-orange-500/60 transition-all relative group"
+      className="flex flex-col items-center bg-[#181818] border border-zinc-800 rounded-xl p-2.5 shadow-md hover:border-orange-500/60 transition-all relative group shrink-0 select-none"
     >
-      <div className="flex items-center justify-between w-full px-1 mb-1">
+      <div className="flex items-center justify-between w-full px-1 mb-1.5">
         <span className="font-bold text-sm text-orange-500 font-mono tracking-tight">{chord}</span>
         {showControls && totalVariations > 1 && (
-          <div className="flex items-center gap-0.5 bg-zinc-900 border border-zinc-700/80 rounded px-1.5 py-0.5 text-[10px] text-zinc-400 font-mono">
+          <div className="flex items-center gap-1 bg-zinc-900 border border-zinc-700/80 rounded-lg px-2 py-0.5 text-[11px] text-zinc-400 font-mono shadow-sm">
             {onPrevVariation && (
               <button
                 type="button"
@@ -56,7 +56,7 @@ export const ChordDiagram: React.FC<ChordDiagramProps> = ({
                   onPrevVariation();
                 }}
                 title="Forma anterior do acorde"
-                className="hover:text-orange-400 active:scale-90 px-0.5 text-zinc-400 hover:bg-zinc-800 rounded transition-colors text-xs leading-none"
+                className="hover:text-orange-400 active:scale-90 px-1 text-zinc-400 hover:bg-zinc-800 rounded transition-colors text-sm font-bold leading-none"
               >
                 ‹
               </button>
@@ -72,7 +72,7 @@ export const ChordDiagram: React.FC<ChordDiagramProps> = ({
                   onNextVariation();
                 }}
                 title="Próxima forma do acorde"
-                className="hover:text-orange-400 active:scale-90 px-0.5 text-zinc-400 hover:bg-zinc-800 rounded transition-colors text-xs leading-none"
+                className="hover:text-orange-400 active:scale-90 px-1 text-zinc-400 hover:bg-zinc-800 rounded transition-colors text-sm font-bold leading-none"
               >
                 ›
               </button>

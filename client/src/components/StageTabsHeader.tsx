@@ -31,13 +31,13 @@ export const StageTabsHeader: React.FC<StageTabsHeaderProps> = ({
       </div>
 
       {/* Abas: Cifra, Compassos, Graus */}
-      <div className="flex items-center gap-2 mt-4 flex-wrap">
+      <div className="flex items-center gap-2.5 mt-4 flex-wrap">
         <button
           onClick={() => onViewModeChange('chordpro')}
-          className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
+          className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all active:scale-95 ${
             viewMode === 'chordpro'
-              ? 'bg-orange-500 text-white shadow-md'
-              : 'bg-[#242424] text-zinc-300 hover:bg-zinc-700'
+              ? 'bg-orange-500 text-white shadow-md shadow-orange-500/25 border border-orange-400'
+              : 'bg-[#202020] text-zinc-300 hover:bg-zinc-800 hover:text-white border border-zinc-750'
           }`}
         >
           Cifra
@@ -45,10 +45,10 @@ export const StageTabsHeader: React.FC<StageTabsHeaderProps> = ({
 
         <button
           onClick={() => onViewModeChange('leadSheet')}
-          className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
+          className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all active:scale-95 ${
             viewMode === 'leadSheet'
-              ? 'bg-orange-500 text-white shadow-md'
-              : 'bg-[#242424] text-zinc-300 hover:bg-zinc-700'
+              ? 'bg-orange-500 text-white shadow-md shadow-orange-500/25 border border-orange-400'
+              : 'bg-[#202020] text-zinc-300 hover:bg-zinc-800 hover:text-white border border-zinc-750'
           }`}
         >
           Compassos
@@ -56,10 +56,10 @@ export const StageTabsHeader: React.FC<StageTabsHeaderProps> = ({
 
         <button
           onClick={() => onViewModeChange('degrees')}
-          className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
+          className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all active:scale-95 ${
             viewMode === 'degrees'
-              ? 'bg-orange-500 text-white shadow-md'
-              : 'bg-[#242424] text-zinc-300 hover:bg-zinc-700'
+              ? 'bg-orange-500 text-white shadow-md shadow-orange-500/25 border border-orange-400'
+              : 'bg-[#202020] text-zinc-300 hover:bg-zinc-800 hover:text-white border border-zinc-750'
           }`}
         >
           Graus

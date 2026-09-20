@@ -258,15 +258,15 @@ Você que me faz cantar, assim`;
             {!editingSong && (
               <button
                 onClick={() => setIsCreating(prev => !prev)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs sm:text-sm transition-all shadow-md active:scale-95"
               >
-                <Plus size={14} />
+                <Plus size={15} />
                 <span>{isCreating ? 'Ver Lista' : 'Nova Cifra'}</span>
               </button>
             )}
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+              className="p-2 rounded-xl hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
             >
               <X size={20} />
             </button>
@@ -275,14 +275,14 @@ Você que me faz cantar, assim`;
 
         {/* Content */}
         {isCreating ? (
-          <div className="p-5 space-y-4 overflow-y-auto flex-1">
+          <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
             {/* Se não estiver editando, permitir alternar entre Individual e Upload Massivo */}
             {!editingSong && (
               <div className="flex items-center gap-2 p-1 bg-[#141414] border border-zinc-800 rounded-xl">
                 <button
                   type="button"
                   onClick={() => setCreateMode('single')}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${
                     createMode === 'single'
                       ? 'bg-orange-500 text-white shadow'
                       : 'text-zinc-400 hover:text-white'
@@ -293,13 +293,13 @@ Você que me faz cantar, assim`;
                 <button
                   type="button"
                   onClick={() => setCreateMode('bulk')}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                  className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-all ${
                     createMode === 'bulk'
                       ? 'bg-orange-500 text-white shadow'
                       : 'text-zinc-400 hover:text-white'
                   }`}
                 >
-                  <UploadCloud size={14} />
+                  <UploadCloud size={15} />
                   <span>Upload Massivo (.txt)</span>
                 </button>
               </div>
@@ -431,49 +431,49 @@ Você que me faz cantar, assim`;
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                   <div className="sm:col-span-2">
-                    <label className="block text-xs font-semibold text-zinc-300 mb-1">Título da Música *</label>
+                    <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Título da Música *</label>
                     <input
                       type="text"
                       required
                       value={title}
                       onChange={e => setTitle(e.target.value)}
                       placeholder="Ex: Ainda Bem"
-                      className="w-full bg-[#121212] border border-zinc-750 text-white text-xs rounded-xl px-3 py-2.5 focus:border-orange-500 outline-none"
+                      className="w-full bg-[#121212] border border-zinc-750 text-white text-sm rounded-xl px-3.5 py-2.5 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-300 mb-1">Tom Original</label>
+                    <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Tom Original</label>
                     <input
                       type="text"
                       value={key}
                       onChange={e => setKey(e.target.value)}
                       placeholder="Ex: Dm ou C"
-                      className="w-full bg-[#121212] border border-zinc-750 text-white text-xs font-mono rounded-xl px-3 py-2.5 focus:border-orange-500 outline-none"
+                      className="w-full bg-[#121212] border border-zinc-750 text-white text-sm font-mono rounded-xl px-3.5 py-2.5 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none transition-colors"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-300 mb-1">Artista / Compositor</label>
+                    <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Artista / Compositor</label>
                     <input
                       type="text"
                       value={artist}
                       onChange={e => setArtist(e.target.value)}
                       placeholder="Ex: Marisa Monte"
-                      className="w-full bg-[#121212] border border-zinc-750 text-white text-xs rounded-xl px-3 py-2.5 focus:border-orange-500 outline-none"
+                      className="w-full bg-[#121212] border border-zinc-750 text-white text-sm rounded-xl px-3.5 py-2.5 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-300 mb-1">Estilo Musical</label>
+                    <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Estilo Musical</label>
                     <select
                       value={estilo}
                       onChange={e => setEstilo(e.target.value)}
-                      className="w-full bg-[#121212] border border-zinc-750 text-white text-xs rounded-xl px-3 py-2.5 focus:border-orange-500 outline-none"
+                      className="w-full bg-[#121212] border border-zinc-750 text-white text-sm rounded-xl px-3.5 py-2.5 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none transition-colors"
                     >
                       <option value="MPB">MPB</option>
                       <option value="Samba">Samba / Pagode</option>
@@ -485,7 +485,7 @@ Você que me faz cantar, assim`;
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-semibold text-zinc-300">
                       {formatType === 'standard'
                         ? 'Cole a cifra no formato Cifra Club (acordes em cima da letra):'
@@ -496,9 +496,9 @@ Você que me faz cantar, assim`;
                       <button
                         type="button"
                         onClick={() => handleTextChange(sampleStandardCifra)}
-                        className="text-[11px] text-orange-400 hover:text-orange-300 underline flex items-center gap-1"
+                        className="text-xs text-orange-400 hover:text-orange-300 underline flex items-center gap-1 font-medium"
                       >
-                        <Sparkles size={11} />
+                        <Sparkles size={12} />
                         <span>Preencher exemplo</span>
                       </button>
                     )}
@@ -514,24 +514,24 @@ Você que me faz cantar, assim`;
                         ? `Exemplo:\n       Dm\nAinda bem\n                       Bb/D\nQue agora encontrei você`
                         : `Exemplo:\n[Dm]Ainda bem que agora encon[Bb/D]trei você`
                     }
-                    className="w-full bg-[#121212] border border-zinc-750 text-zinc-200 font-mono text-xs rounded-xl p-3 focus:border-orange-500 outline-none leading-relaxed"
+                    className="w-full bg-[#121212] border border-zinc-750 text-zinc-200 font-mono text-[13px] sm:text-sm rounded-xl p-3.5 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none leading-relaxed"
                   />
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-zinc-800">
+                <div className="flex justify-end gap-2.5 pt-3 border-t border-zinc-800">
                   <button
                     type="button"
                     onClick={() => {
                       setIsCreating(false);
                       if (editingSong) onClose();
                     }}
-                    className="px-4 py-2 text-xs font-semibold text-zinc-400 hover:text-white"
+                    className="px-4 py-2.5 text-xs sm:text-sm font-semibold text-zinc-400 hover:text-white transition-colors"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-lg shadow-orange-500/20 active:scale-95"
+                    className="px-6 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs sm:text-sm shadow-lg shadow-orange-500/20 active:scale-95 transition-all"
                   >
                     {editingSong ? 'Atualizar Cifra' : 'Salvar no Acervo'}
                   </button>
@@ -542,23 +542,23 @@ Você que me faz cantar, assim`;
         ) : (
           <>
             {/* Search Bar */}
-            <div className="p-3 bg-[#141414] border-b border-zinc-800">
+            <div className="p-3 sm:p-4 bg-[#141414] border-b border-zinc-800">
               <div className="relative">
-                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
                 <input
                   type="text"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder="Buscar por música ou artista..."
-                  className="w-full bg-[#181818] border border-zinc-750 text-white text-xs rounded-xl pl-10 pr-4 py-2 focus:border-orange-500 outline-none"
+                  className="w-full bg-[#181818] border border-zinc-750 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 text-white text-sm rounded-xl pl-10 pr-4 py-2.5 outline-none transition-colors"
                 />
               </div>
             </div>
 
             {/* Song List */}
-            <div className="p-3 overflow-y-auto flex-1 space-y-2 scrollbar-thin scrollbar-thumb-zinc-700">
+            <div className="p-3 sm:p-4 overflow-y-auto flex-1 space-y-2 scrollbar-thin scrollbar-thumb-zinc-700">
               {filteredSongs.length === 0 ? (
-                <div className="text-center py-12 text-zinc-500 text-xs">
+                <div className="text-center py-12 text-zinc-500 text-sm">
                   Nenhuma música encontrada com o termo "{search}".
                 </div>
               ) : (
@@ -572,37 +572,37 @@ Você que me faz cantar, assim`;
                         onSelectSong(song);
                         onClose();
                       }}
-                      className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all active:scale-[0.99] ${
+                      className={`p-3 sm:p-3.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all active:scale-[0.99] ${
                         isActive
                           ? 'bg-orange-500/15 border-orange-500/50 shadow-md'
                           : 'bg-[#181818] border-zinc-800 hover:border-zinc-700 hover:bg-[#202020]'
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-mono font-bold text-xs ${
-                          isActive ? 'bg-orange-500 text-white' : 'bg-zinc-800 text-orange-400'
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-mono font-bold text-xs sm:text-[13px] border shadow-inner ${
+                          isActive ? 'bg-orange-500 border-orange-400 text-white' : 'bg-zinc-800 border-zinc-750 text-orange-400'
                         }`}>
                           {song.tom_original}
                         </div>
 
                         <div>
-                          <div className="font-semibold text-xs text-white flex items-center gap-1.5">
+                          <div className="font-bold text-sm text-white flex items-center gap-1.5">
                             {song.titulo}
                             {song.publico ? (
-                              <span title="Público / Compartilhado"><Globe size={11} className="text-zinc-500" /></span>
+                              <span title="Público / Compartilhado"><Globe size={12} className="text-zinc-500" /></span>
                             ) : (
-                              <span title="Privado"><Lock size={11} className="text-amber-500" /></span>
+                              <span title="Privado"><Lock size={12} className="text-amber-500" /></span>
                             )}
                           </div>
-                          <div className="text-[11px] text-zinc-400">
+                          <div className="text-xs text-zinc-400 mt-0.5">
                             {song.artista} • {song.estilo}
                           </div>
                         </div>
                       </div>
 
                       {isActive && (
-                        <div className="p-1 rounded-full bg-orange-500/20 text-orange-400">
-                          <Check size={15} />
+                        <div className="p-1.5 rounded-full bg-orange-500/20 text-orange-400">
+                          <Check size={16} />
                         </div>
                       )}
                     </div>
