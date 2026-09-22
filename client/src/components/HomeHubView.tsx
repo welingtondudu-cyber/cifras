@@ -1,50 +1,42 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import type { Song, Setlist } from '../types/music';
 import {
-  Plus,
   ListMusic,
   Lock,
   Globe,
   SlidersHorizontal,
   ChevronRight,
   Mic2,
-  Archive,
-  Camera
+  Camera,
+  Music,
+  Play
 } from 'lucide-react';
 
 interface HomeHubViewProps {
   songs: Song[];
   setlists: Setlist[];
+  onSelectSong: (song: Song) => void;
   onSelectSetlist: (setlist: Setlist) => void;
-  onCreateNewSetlist: () => void;
-  onNavigateToSongsList: (filters?: { search?: string; style?: string | null; artist?: string | null }) => void;
+  onCreateNewSetlist?: () => void;
+  onNavigateToSongsList: (filters?: { search?: string; style?: string | null; artist?: string | null; tab?: 'all' | 'setlists' | 'songs' | 'artists' | 'archived' }) => void;
   onEditArtistPhoto?: (artistName: string, currentAvatar?: string) => void;
+  onEditSetlistPhoto?: (setlist: Setlist) => void;
 }
 
 export const HomeHubView: React.FC<HomeHubViewProps> = ({
   songs,
   setlists,
+  onSelectSong,
   onSelectSetlist,
-  onCreateNewSetlist,
   onNavigateToSongsList,
   onEditArtistPhoto,
+  onEditSetlistPhoto,
 }) => {
-  const [showAllSetlists, setShowAllSetlists] = useState(false);
-  const [viewArchived, setViewArchived] = useState(false);
-
   const ALL_STYLES = ['Samba', 'MPB', 'Rock', 'Sertanejo', 'Gospel'];
 
-  // Separar repertórios ativos e arquivados
+  // Filtrar apenas itens ativos (não arquivados)
   const activeSetlists = useMemo(() => setlists.filter(s => !s.arquivado), [setlists]);
-  const archivedSetlists = useMemo(() => setlists.filter(s => s.arquivado), [setlists]);
-
-  const currentList = viewArchived ? archivedSetlists : activeSetlists;
-
-  // Exibir os 5 mais recentes por padrão, ou todos se clicar em "Mostrar todos"
-  const displayedSetlists = useMemo(() => {
-    if (showAllSetlists) return currentList;
-    return currentList.slice(0, 5);
-  }, [currentList, showAllSetlists]);
+  const activeSongs = useMemo(() => songs.filter(s => !s.arquivado), [songs]);
 
   // Artistas que possuem mais músicas (sendo até 3 por estilo musical, sem subtítulos)
   const topArtists = useMemo(() => {
@@ -83,62 +75,69 @@ export const HomeHubView: React.FC<HomeHubViewProps> = ({
   return (
     <div className="max-w-7xl w-full mx-auto px-4 sm:px-8 py-6 space-y-9 text-zinc-100 pb-24">
 
-      {/* SEÇÃO 1: Repertórios (5 mais recentes + botão Mostrar todos) */}
+      {/* SEÇÃO 1: Repertórios */}
       <section>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
             <ListMusic size={20} className="text-orange-500" />
-            {viewArchived ? 'Repertórios Arquivados' : 'Repertórios'}
+            Repertórios
             <span className="text-xs font-mono text-zinc-400 font-normal">
-              ({displayedSetlists.length} de {currentList.length})
+              ({activeSetlists.length})
             </span>
           </h2>
 
-          <div className="flex items-center gap-2 sm:gap-3">
-            {archivedSetlists.length > 0 && (
-              <button
-                onClick={() => {
-                  setViewArchived(prev => !prev);
-                  setShowAllSetlists(false);
-                }}
-                className="text-xs sm:text-sm font-semibold text-zinc-400 hover:text-orange-400 flex items-center gap-1.5 transition-colors py-1 px-2 rounded-lg hover:bg-zinc-850"
-                title={viewArchived ? 'Ver repertórios ativos' : 'Ver repertórios arquivados'}
-              >
-                <Archive size={15} />
-                <span>{viewArchived ? 'Ver Ativos' : `Arquivados (${archivedSetlists.length})`}</span>
-              </button>
-            )}
-
-            <button
-              onClick={() => setShowAllSetlists(prev => !prev)}
-              className="text-xs sm:text-sm font-bold text-orange-500 hover:text-orange-400 flex items-center gap-1 transition-colors py-1 px-2 rounded-lg hover:bg-orange-500/10"
-            >
-              <span>{showAllSetlists ? 'Mostrar menos' : 'Mostrar todos'}</span>
-              <ChevronRight size={15} className={showAllSetlists ? 'rotate-90' : ''} />
-            </button>
-          </div>
+          <button
+            onClick={() => onNavigateToSongsList({ tab: 'setlists' })}
+            className="text-xs sm:text-sm font-bold text-orange-500 hover:text-orange-400 flex items-center gap-1 transition-colors py-1 px-2 rounded-lg hover:bg-orange-500/10"
+          >
+            <span>Mostrar todos</span>
+            <ChevronRight size={15} />
+          </button>
         </div>
 
-        {/* Grade de Repertórios (5 mais recentes + Criar Novo) */}
+        {/* Grade de Repertórios com Suporte a Foto Personalizada */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5 sm:gap-4">
-          {displayedSetlists.map((setlist, idx) => (
+          {activeSetlists.slice(0, 6).map((setlist, idx) => (
             <div
               key={setlist.id}
               onClick={() => onSelectSetlist(setlist)}
               className="group cursor-pointer flex flex-col transition-all duration-200 hover:-translate-y-1 select-none"
             >
-              <div className={`aspect-square w-full rounded-2xl bg-gradient-to-br ${
-                setlist.cover_gradient || (idx % 2 === 0 ? 'from-orange-500 to-amber-700' : 'from-zinc-800 to-zinc-900')
+              <div className={`aspect-square w-full rounded-2xl ${
+                setlist.cover_image ? 'bg-zinc-800' : `bg-gradient-to-br ${setlist.cover_gradient || (idx % 2 === 0 ? 'from-orange-500 to-amber-700' : 'from-zinc-800 to-zinc-900')}`
               } p-4 flex flex-col justify-between shadow-lg relative overflow-hidden group-hover:ring-2 group-hover:ring-orange-500 transition-all`}>
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] sm:text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-black/40 text-white backdrop-blur-sm flex items-center gap-1 font-semibold">
+                {setlist.cover_image && (
+                  <img
+                    src={setlist.cover_image}
+                    alt={setlist.nome}
+                    className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-opacity"
+                  />
+                )}
+
+                <div className="flex items-center justify-between relative z-10">
+                  <span className="text-[10px] sm:text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-black/50 text-white backdrop-blur-sm flex items-center gap-1 font-semibold">
                     {setlist.publico ? <Globe size={11} /> : <Lock size={11} />}
                     {setlist.publico ? 'Público' : 'Privado'}
                   </span>
-                  <ListMusic size={17} className="text-white/80" />
+                  <div className="flex items-center gap-1">
+                    {onEditSetlistPhoto && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEditSetlistPhoto(setlist);
+                        }}
+                        title="Alterar capa do repertório"
+                        className="p-1 rounded-full bg-black/40 hover:bg-orange-500 text-white transition-all opacity-0 group-hover:opacity-100"
+                      >
+                        <Camera size={12} />
+                      </button>
+                    )}
+                    <ListMusic size={17} className="text-white/80" />
+                  </div>
                 </div>
 
-                <div>
+                <div className="relative z-10">
                   <h3 className="text-base sm:text-lg font-black text-white leading-tight drop-shadow-md">
                     {setlist.nome}
                   </h3>
@@ -155,24 +154,59 @@ export const HomeHubView: React.FC<HomeHubViewProps> = ({
               </div>
             </div>
           ))}
-
-          {/* Card para Criar Novo Repertório */}
-          {!viewArchived && (
-            <div
-              onClick={onCreateNewSetlist}
-              className="aspect-square w-full rounded-2xl border-2 border-dashed border-zinc-800 hover:border-orange-500 bg-[#181818]/60 hover:bg-orange-500/5 cursor-pointer flex flex-col items-center justify-center p-4 text-center transition-all group"
-            >
-              <div className="w-11 h-11 rounded-full bg-zinc-800 group-hover:bg-orange-500 group-hover:text-white text-zinc-400 flex items-center justify-center transition-colors mb-2 shadow-sm">
-                <Plus size={20} />
-              </div>
-              <span className="text-xs sm:text-[13px] font-bold text-zinc-300 group-hover:text-orange-400">Novo Repertório</span>
-              <span className="text-[10px] text-zinc-500 mt-0.5">Público ou Privado</span>
-            </div>
-          )}
         </div>
       </section>
 
-      {/* SEÇÃO 2: Estilos Musicais */}
+      {/* SEÇÃO 2: Cifras e Músicas em Destaque (Clique abre direto no palco) */}
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+            <Music size={20} className="text-orange-500" />
+            Cifras em Destaque
+          </h2>
+
+          <button
+            onClick={() => onNavigateToSongsList({ tab: 'songs' })}
+            className="text-xs sm:text-sm font-bold text-orange-500 hover:text-orange-400 flex items-center gap-1 transition-colors py-1 px-2 rounded-lg hover:bg-orange-500/10"
+          >
+            <span>Mostrar todas</span>
+            <ChevronRight size={15} />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {activeSongs.slice(0, 6).map(song => (
+            <div
+              key={song.id}
+              onClick={() => onSelectSong(song)}
+              className="p-3.5 bg-[#181818] hover:bg-[#202020] border border-zinc-800 hover:border-orange-500/50 rounded-2xl flex items-center justify-between gap-3 cursor-pointer transition-all group shadow-md"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-zinc-850 flex items-center justify-center font-bold text-orange-400 text-xs shrink-0 border border-zinc-750">
+                  {song.tom_original}
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-sm font-bold text-white group-hover:text-orange-400 transition-colors truncate">
+                    {song.titulo}
+                  </h4>
+                  <p className="text-xs text-zinc-400 truncate flex items-center gap-2 mt-0.5">
+                    <span>{song.artista}</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-300 font-mono">
+                      {song.estilo}
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="w-8 h-8 rounded-full bg-zinc-800 group-hover:bg-orange-500 text-zinc-400 group-hover:text-white flex items-center justify-center transition-colors shrink-0">
+                <Play size={13} fill="currentColor" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* SEÇÃO 3: Estilos Musicais */}
       <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
@@ -185,7 +219,7 @@ export const HomeHubView: React.FC<HomeHubViewProps> = ({
           {ALL_STYLES.map(style => (
             <button
               key={style}
-              onClick={() => onNavigateToSongsList({ style })}
+              onClick={() => onNavigateToSongsList({ style, tab: 'songs' })}
               className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap bg-[#181818] hover:bg-orange-500 hover:text-white text-zinc-300 border border-zinc-800 transition-all shadow-md active:scale-95"
             >
               {style}
@@ -194,7 +228,7 @@ export const HomeHubView: React.FC<HomeHubViewProps> = ({
         </div>
       </section>
 
-      {/* SEÇÃO 3: Artistas (Com Ícone no Título) */}
+      {/* SEÇÃO 3: Artistas (Quebra de linha sem barra horizontal) */}
       <section>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
@@ -203,7 +237,7 @@ export const HomeHubView: React.FC<HomeHubViewProps> = ({
           </h2>
 
           <button
-            onClick={() => onNavigateToSongsList({})}
+            onClick={() => onNavigateToSongsList({ tab: 'artists' })}
             className="text-xs sm:text-sm font-bold text-orange-500 hover:text-orange-400 flex items-center gap-1 transition-colors py-1 px-2 rounded-lg hover:bg-orange-500/10"
           >
             <span>Mostrar todos</span>
@@ -211,11 +245,12 @@ export const HomeHubView: React.FC<HomeHubViewProps> = ({
           </button>
         </div>
 
-        <div className="flex items-center gap-4 sm:gap-6 overflow-x-auto pb-3 scrollbar-none">
+        {/* Quebra de linha inteligente para não criar rolagem horizontal */}
+        <div className="flex flex-wrap items-center gap-4 sm:gap-6 pb-2">
           {topArtists.map(artist => (
             <div
               key={artist.name}
-              onClick={() => onNavigateToSongsList({ artist: artist.name })}
+              onClick={() => onNavigateToSongsList({ artist: artist.name, tab: 'songs' })}
               className="flex flex-col items-center gap-2 cursor-pointer group shrink-0"
             >
               <div className="relative group/avatar">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { Song } from '../types/music';
 import { convertStandardCifraToChordPro } from '../chordEngine/cifraConverter';
+import { transposeChordProText, getSemitoneDistance, AVAILABLE_KEYS } from '../chordEngine/transposer';
 import {
   Search,
   Plus,
@@ -101,6 +102,20 @@ export const SongLibraryModal: React.FC<SongLibraryModalProps> = ({
     }
   };
 
+  // Transpor acordes do texto ao alterar o tom
+  const handleKeyChange = (newKey: string) => {
+    const oldKey = key;
+    setKey(newKey);
+
+    // Se estiver editando ou já possuir acordes em colchetes, transpor automaticamente o texto da cifra
+    if (cifraText && (formatType === 'chordpro' || cifraText.includes('['))) {
+      const semitones = getSemitoneDistance(oldKey, newKey);
+      if (semitones !== 0) {
+        setCifraText(prev => transposeChordProText(prev, semitones));
+      }
+    }
+  };
+
   const handleSaveSong = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !cifraText.trim()) return;
@@ -112,12 +127,13 @@ export const SongLibraryModal: React.FC<SongLibraryModalProps> = ({
     }
 
     if (editingSong && onUpdateSong) {
+      const targetKey = key.trim() || 'C';
       await onUpdateSong({
         ...editingSong,
         titulo: title.trim(),
         artista: artist.trim() || 'Artista Desconhecido',
         estilo: estilo.trim() || 'Samba',
-        tom_original: key.trim() || 'C',
+        tom_original: targetKey,
         chordpro: finalChordPro,
       });
     } else {
@@ -445,14 +461,36 @@ Você que me faz cantar, assim`;
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Tom Original</label>
-                    <input
-                      type="text"
-                      value={key}
-                      onChange={e => setKey(e.target.value)}
-                      placeholder="Ex: Dm ou C"
-                      className="w-full bg-[#121212] border border-zinc-750 text-white text-sm font-mono rounded-xl px-3.5 py-2.5 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none transition-colors"
-                    />
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-semibold text-zinc-300">Tom da Cifra</label>
+                      {editingSong && (
+                        <span className="text-[10px] text-orange-400 font-mono">
+                          Transpõe acordes auto
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <select
+                        value={AVAILABLE_KEYS.includes(key) ? key : ''}
+                        onChange={e => {
+                          if (e.target.value) handleKeyChange(e.target.value);
+                        }}
+                        className="bg-[#121212] border border-zinc-750 text-orange-400 font-mono font-bold text-xs sm:text-sm rounded-xl px-2.5 py-2.5 outline-none focus:border-orange-500 transition-colors cursor-pointer"
+                        title="Selecione um tom para transpor automaticamente"
+                      >
+                        <option value="" disabled>Tons</option>
+                        {AVAILABLE_KEYS.map(k => (
+                          <option key={k} value={k}>{k}</option>
+                        ))}
+                      </select>
+                      <input
+                        type="text"
+                        value={key}
+                        onChange={e => handleKeyChange(e.target.value)}
+                        placeholder="Ex: Dm ou C"
+                        className="flex-1 bg-[#121212] border border-zinc-750 text-white text-sm font-mono rounded-xl px-3.5 py-2.5 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30 outline-none transition-colors"
+                      />
+                    </div>
                   </div>
                 </div>
 

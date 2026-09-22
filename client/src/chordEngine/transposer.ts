@@ -83,3 +83,24 @@ export function getSemitoneDistance(fromKey: string, toKey: string): number {
 export const AVAILABLE_KEYS = [
   'C', 'C#', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'
 ];
+
+/**
+ * Transpõe todas as ocorrências de [Acorde] em um texto no formato ChordPro por N semitons.
+ */
+export function transposeChordProText(chordProText: string, semitones: number, preferFlats = false): string {
+  if (semitones === 0 || !chordProText) return chordProText;
+
+  // 1. Atualizar diretiva {key: ...} se existir
+  let updated = chordProText.replace(/\{key:\s*([^}]+)\}/gi, (_, oldKey) => {
+    return `{key: ${transposeChord(oldKey.trim(), semitones, preferFlats)}}`;
+  });
+
+  // 2. Transpor todos os acordes entre colchetes [Acorde]
+  updated = updated.replace(/\[([^\]]+)\]/g, (match, chord) => {
+    if (chord.startsWith('tab:') || chord.startsWith('comment:')) return match;
+    const transposed = transposeChord(chord.trim(), semitones, preferFlats);
+    return `[${transposed}]`;
+  });
+
+  return updated;
+}

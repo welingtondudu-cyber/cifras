@@ -16,18 +16,20 @@ import {
   updateMusicaDb,
   createSetlistDb,
   updateSetlistItemsOrderDb,
+  addSongToSetlistDb,
+  removeSongFromSetlistDb,
   getCurrentUser,
   signOutUser,
   supabase
 } from './lib/supabaseClient';
 import { parseChordPro } from './chordEngine/chordProParser';
+import { transposeChordProText } from './chordEngine/transposer';
+import { ArrowLeft, Plus } from 'lucide-react';
 import { useSmartScroll } from './hooks/useSmartScroll';
 import { LoginScreen } from './components/LoginScreen';
 import { GlobalHeader } from './components/GlobalHeader';
 import { HomeHubView } from './components/HomeHubView';
 import { SongsListView } from './components/SongsListView';
-import { StageHeader } from './components/StageHeader';
-import { CifraClubSidebar } from './components/CifraClubSidebar';
 import { ChordSheetView } from './components/ChordSheetView';
 import { LeadSheetGrid } from './components/LeadSheetGrid';
 import { DegreeGrid } from './components/DegreeGrid';
@@ -37,31 +39,99 @@ import { CreateSetlistModal } from './components/CreateSetlistModal';
 import { SongLibraryModal } from './components/SongLibraryModal';
 import { ChordDictionaryModal } from './components/ChordDictionaryModal';
 import { EditArtistModal } from './components/EditArtistModal';
+import { EditSetlistPhotoModal } from './components/EditSetlistPhotoModal';
 import { MobileBottomNav } from './components/MobileBottomNav';
+import { SongFloatingToolbar } from './components/SongFloatingToolbar';
+import { SongOptionsSheet } from './components/SongOptionsSheet';
+import { TablatureEditorModal } from './components/TablatureEditorModal';
+import {
+  getSavedFavorites,
+  saveFavorites,
+  getSavedCustomSongs,
+  saveCustomSong,
+  getSavedCustomSetlists,
+  saveAllSetlists
+} from './lib/storage';
 
 export function App() {
-  // Autenticação (Apenas pessoas logadas têm acesso ao sistema)
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [authChecking, setAuthChecking] = useState<boolean>(true);
+  // Autenticação com restauração imediata de sessão salva no localStorage
+  const [user, setUser] = useState<UserProfile | null>(() => {
+    try {
+      const saved = localStorage.getItem('cifralab_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [authChecking, setAuthChecking] = useState<boolean>(false);
+
+  // Rastreamento da origem de navegação para o botão Voltar da cifra
+  type NavigationSource =
+    | { type: 'home' }
+    | { type: 'songs_list'; filters?: { search?: string; style?: string | null; artist?: string | null; tab?: 'all' | 'setlists' | 'songs' | 'artists' | 'archived' } }
+    | { type: 'setlist'; setlist: Setlist };
+
+  // Recuperação de tela e cifra salvas para evitar retorno de página no F5 (atualização)
+  const savedNav = useMemo(() => {
+    try {
+      const raw = sessionStorage.getItem('cifralab_active_nav');
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return null;
+  }, []);
 
   // Telas e navegação
-  const [screenView, setScreenView] = useState<ScreenView>('home');
+  const [screenView, setScreenView] = useState<ScreenView>(() => {
+    return savedNav?.screenView || 'home';
+  });
+
+  const [navigationSource, setNavigationSource] = useState<NavigationSource>(() => {
+    return savedNav?.navigationSource || { type: 'home' };
+  });
 
   // Parâmetros para a tela dedicada de músicas (SongsListView)
   const [songListFilters, setSongListFilters] = useState<{
     search?: string;
     style?: string | null;
     artist?: string | null;
-  }>({});
+    tab?: 'all' | 'setlists' | 'songs' | 'artists' | 'archived';
+  }>(() => {
+    return savedNav?.songListFilters || {};
+  });
 
-  // Dados
-  const [songs, setSongs] = useState<Song[]>(DEFAULT_SONGS);
-  const [setlists, setSetlists] = useState<Setlist[]>(DEFAULT_SETLISTS);
+  // Dados com persistência híbrida
+  const [songs, setSongs] = useState<Song[]>(() => {
+    const cached = getSavedCustomSongs();
+    return cached.length > 0 ? cached : DEFAULT_SONGS;
+  });
+  const [setlists, setSetlists] = useState<Setlist[]>(() => {
+    return getSavedCustomSetlists();
+  });
 
   // Música e repertório ativos
-  const [activeSong, setActiveSong] = useState<Song>(DEFAULT_SONGS[0]);
-  const [activeSetlist, setActiveSetlist] = useState<Setlist | null>(DEFAULT_SETLISTS[0]);
-  const [songIndexInSetlist, setSongIndexInSetlist] = useState<number>(0);
+  const [activeSong, setActiveSong] = useState<Song>(() => {
+    const cachedSongs = getSavedCustomSongs();
+    const all = cachedSongs.length > 0 ? cachedSongs : DEFAULT_SONGS;
+    if (savedNav?.activeSongId) {
+      const found = all.find(s => s.id === savedNav.activeSongId);
+      if (found) return found;
+    }
+    return all[0] || DEFAULT_SONGS[0];
+  });
+
+  const [activeSetlist, setActiveSetlist] = useState<Setlist | null>(() => {
+    const cachedSetlists = getSavedCustomSetlists().filter(s => s.id !== 'set-1' && s.nome.trim().toLowerCase() !== 'recentes');
+    if (savedNav?.activeSetlistId) {
+      const found = cachedSetlists.find(s => s.id === savedNav.activeSetlistId);
+      if (found) return found;
+    }
+    const defaultClean = DEFAULT_SETLISTS.filter(s => s.id !== 'set-1' && s.nome.trim().toLowerCase() !== 'recentes');
+    return cachedSetlists[0] || defaultClean[0] || null;
+  });
+
+  const [songIndexInSetlist, setSongIndexInSetlist] = useState<number>(() => {
+    return typeof savedNav?.songIndexInSetlist === 'number' ? savedNav.songIndexInSetlist : 0;
+  });
 
   // Controles de Palco
   const [semitones, setSemitones] = useState<number>(0);
@@ -70,12 +140,14 @@ export function App() {
   const [showTablature, setShowTablature] = useState<boolean>(true);
   const [showDiagrams, setShowDiagrams] = useState<boolean>(true);
   const [viewMode, setViewMode] = useState<ViewMode>('chordpro');
-  const [fontSize] = useState<number>(18);
-  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [fontSize, setFontSize] = useState<number>(18);
+
+  // Modais de Palco Mobile (Bottom Sheet e Editor de Tablaturas)
+  const [isSongOptionsOpen, setIsSongOptionsOpen] = useState<boolean>(false);
+  const [isTabEditorOpen, setIsTabEditorOpen] = useState<boolean>(false);
 
   // Painel de IA lateral (estilo IDE Antigravity)
   const [isAIPanelOpen, setIsAIPanelOpen] = useState<boolean>(false);
-  const [isMobileToolsOpen, setIsMobileToolsOpen] = useState<boolean>(false);
   const [pendingAIPrompt, setPendingAIPrompt] = useState<string | null>(null);
 
   // Disparar reordenação harmônica de repertório com IA
@@ -92,27 +164,72 @@ export function App() {
   const [isCreateSongOpen, setIsCreateSongOpen] = useState<boolean>(false);
   const [editingSong, setEditingSong] = useState<Song | null>(null);
   const [editingArtist, setEditingArtist] = useState<{ name: string; avatar?: string } | null>(null);
+  const [editingSetlistPhoto, setEditingSetlistPhoto] = useState<Setlist | null>(null);
+  const [showTransitionNotes, setShowTransitionNotes] = useState<boolean>(true);
   const [isDictionaryOpen, setIsDictionaryOpen] = useState<boolean>(false);
   const [selectedChord, setSelectedChord] = useState<string | null>(null);
 
   // Favoritos persistentes sincronizados com o repertório de Favoritos
   const [favoriteSongIds, setFavoriteSongIds] = useState<Set<string>>(() => {
-    try {
-      const saved = localStorage.getItem('cifralab_favorites');
-      return saved ? new Set(JSON.parse(saved)) : new Set([DEFAULT_SONGS[0].id]);
-    } catch {
-      return new Set();
-    }
+    return new Set(getSavedFavorites());
   });
 
-  // Smart Scroll Hook
+  // Itens válidos (não arquivados) do repertório ativo com garantia de resolução de música
+  const activeSetlistNonArchivedItems = useMemo(() => {
+    if (!activeSetlist) return [];
+    return activeSetlist.itens
+      .map(item => ({
+        ...item,
+        musica: item.musica || songs.find(s => s.id === item.musica_id)
+      }))
+      .filter(item => item.musica && !item.musica.arquivado);
+  }, [activeSetlist, songs]);
+
+  // Próxima música no repertório para o palco
+  const nextSong = useMemo(() => {
+    if (!activeSetlist || activeSetlistNonArchivedItems.length === 0) return undefined;
+    const nextItem = activeSetlistNonArchivedItems[songIndexInSetlist + 1];
+    return nextItem?.musica;
+  }, [activeSetlist, activeSetlistNonArchivedItems, songIndexInSetlist]);
+
+  // Salvar rota atual para manter a cifra aberta se a página for atualizada (F5)
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('cifralab_active_nav', JSON.stringify({
+        screenView,
+        activeSongId: activeSong?.id,
+        activeSetlistId: activeSetlist?.id,
+        songIndexInSetlist,
+        navigationSource,
+        songListFilters
+      }));
+    } catch {}
+  }, [screenView, activeSong?.id, activeSetlist?.id, songIndexInSetlist, navigationSource, songListFilters]);
+
+  // Smart Scroll Hook com Avanço Automático e Rolagem Dupla
+  const canAutoAdvance = Boolean(
+    activeSetlist &&
+    activeSetlist.itens &&
+    songIndexInSetlist < activeSetlist.itens.length - 1
+  );
+
   const {
     isPlaying,
     speed,
     isTemporarilyPaused,
+    scrollCycles,
+    currentCycle,
+    autoAdvanceEnabled,
     setSpeed,
     togglePlay,
-  } = useSmartScroll();
+    setScrollCycles,
+    setAutoAdvanceEnabled
+  } = useSmartScroll({
+    canAutoAdvance,
+    onAutoAdvance: () => {
+      handleNextSong();
+    }
+  });
 
   // Verificar autenticação inicial e carregar dados
   useEffect(() => {
@@ -124,11 +241,21 @@ export function App() {
       const dbSongs = await fetchMusicas();
       if (dbSongs && dbSongs.length > 0) {
         setSongs(dbSongs);
+        if (savedNav?.activeSongId) {
+          const matching = dbSongs.find(s => s.id === savedNav.activeSongId);
+          if (matching) setActiveSong(matching);
+        }
       }
 
       const dbSetlists = await fetchSetlists();
       if (dbSetlists && dbSetlists.length > 0) {
-        setSetlists(dbSetlists);
+        const clean = dbSetlists.filter(s => s.id !== 'set-1' && s.nome.trim().toLowerCase() !== 'recentes');
+        setSetlists(clean);
+        saveAllSetlists(clean);
+        if (savedNav?.activeSetlistId) {
+          const matching = clean.find(s => s.id === savedNav.activeSetlistId);
+          if (matching) setActiveSetlist(matching);
+        }
       }
 
       // Aplicar fotos personalizadas de artistas salvas
@@ -147,7 +274,24 @@ export function App() {
     const channel = supabase
       .channel('cifralab-sync-all')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'setlists' }, () => {
-        fetchSetlists().then(data => data && setSetlists(data));
+        fetchSetlists().then(data => {
+          if (data && data.length > 0) {
+            const clean = data.filter(s => s.id !== 'set-1' && s.nome.trim().toLowerCase() !== 'recentes');
+            setSetlists(clean);
+            saveAllSetlists(clean);
+            setActiveSetlist(prev => (prev ? clean.find(s => s.id === prev.id) || prev : prev));
+          }
+        });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'setlist_itens' }, () => {
+        fetchSetlists().then(data => {
+          if (data && data.length > 0) {
+            const clean = data.filter(s => s.id !== 'set-1' && s.nome.trim().toLowerCase() !== 'recentes');
+            setSetlists(clean);
+            saveAllSetlists(clean);
+            setActiveSetlist(prev => (prev ? clean.find(s => s.id === prev.id) || prev : prev));
+          }
+        });
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'musicas' }, () => {
         fetchMusicas().then(data => data && setSongs(data));
@@ -159,6 +303,13 @@ export function App() {
     };
   }, []);
 
+  // Persistência contínua de repertórios em cache resiliente
+  useEffect(() => {
+    if (setlists && setlists.length > 0) {
+      saveAllSetlists(setlists);
+    }
+  }, [setlists]);
+
   // Parser em tempo real da cifra ativa
   const parsedSong = useMemo(() => {
     return parseChordPro(activeSong.chordpro, semitones);
@@ -169,19 +320,77 @@ export function App() {
     setSemitones(prev => prev + delta);
   };
 
-  // Navegar para a tela dedicada de Músicas
-  const handleNavigateToSongsList = (filters?: { search?: string; style?: string | null; artist?: string | null }) => {
+  // Navegar para o Catálogo / Listagem de Músicas
+  const handleNavigateToSongsList = (filters?: {
+    search?: string;
+    style?: string | null;
+    artist?: string | null;
+    tab?: 'all' | 'setlists' | 'songs' | 'artists' | 'archived';
+  }) => {
     setSongListFilters(filters || {});
     setScreenView('songs_list');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Tocar música individual
-  const handleSelectSongToPlay = (song: Song) => {
+  // Navegar via Barra Inferior
+  const handleBottomNavNavigate = (view: ScreenView) => {
+    if (view === 'setlist' && !activeSetlist && setlists.length > 0) {
+      setActiveSetlist(setlists[0]);
+    }
+    setScreenView(view);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Retorno inteligente da tela de palco / cifra de acordo com a origem
+  const handleStageBack = () => {
+    if (navigationSource.type === 'setlist') {
+      setActiveSetlist(navigationSource.setlist);
+      setScreenView('setlist');
+    } else if (navigationSource.type === 'songs_list') {
+      if (navigationSource.filters) {
+        setSongListFilters(navigationSource.filters);
+      }
+      setScreenView('songs_list');
+    } else {
+      setScreenView('home');
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const stageBackLabel = useMemo(() => {
+    if (navigationSource.type === 'setlist') return 'o Repertório';
+    if (navigationSource.type === 'songs_list') return 'o Catálogo';
+    return 'o Início';
+  }, [navigationSource]);
+
+  // Perguntar à IA sugestão de passagem harmônica
+  const handleAskAITransition = (fromTitle: string, toTitle: string, fromKey: string, toKey: string) => {
+    setIsAIPanelOpen(true);
+    setPendingAIPrompt(
+      `Sugira os acordes de passagem em colchetes [Acorde] para transicionar de "${fromTitle}" (${fromKey}) para "${toTitle}" (${toKey}) de forma suave para o show ao vivo.`
+    );
+  };
+
+  // Inserir tablatura criada no TabLab na cifra ativa
+  const handleInsertTablature = (tabChordPro: string) => {
+    const updatedChordPro = activeSong.chordpro + '\n' + tabChordPro;
+    const updatedSong = { ...activeSong, chordpro: updatedChordPro };
+    setActiveSong(updatedSong);
+    setSongs(prev => {
+      const next = prev.map(s => (s.id === updatedSong.id ? updatedSong : s));
+      saveCustomSong(updatedSong);
+      return next;
+    });
+    updateMusicaDb(updatedSong);
+  };
+
+  // Tocar música individual com rastreamento da tela de origem
+  const handleSelectSongToPlay = (song: Song, origin?: NavigationSource) => {
     setActiveSong(song);
     setActiveSetlist(null);
     setSongIndexInSetlist(0);
     setSemitones(0);
+    setNavigationSource(origin || { type: 'home' });
     setScreenView('stage');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -201,6 +410,7 @@ export function App() {
       setActiveSong(targetItem.musica);
       setSongIndexInSetlist(startIndex);
       setSemitones(0);
+      setNavigationSource({ type: 'setlist', setlist: activeSetlist });
       setScreenView('stage');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -208,12 +418,12 @@ export function App() {
 
   // Passar para Próxima ou Anterior música do repertório (fácil de palco)
   const handleNextSong = () => {
-    if (!activeSetlist) return;
+    if (!activeSetlist || activeSetlistNonArchivedItems.length === 0) return;
     const nextIndex = songIndexInSetlist + 1;
-    if (nextIndex < activeSetlist.itens.length) {
-      const nextSong = activeSetlist.itens[nextIndex].musica;
-      if (nextSong) {
-        setActiveSong(nextSong);
+    if (nextIndex < activeSetlistNonArchivedItems.length) {
+      const nextSongObj = activeSetlistNonArchivedItems[nextIndex].musica;
+      if (nextSongObj) {
+        setActiveSong(nextSongObj);
         setSongIndexInSetlist(nextIndex);
         setSemitones(0);
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -222,12 +432,12 @@ export function App() {
   };
 
   const handlePrevSong = () => {
-    if (!activeSetlist) return;
+    if (!activeSetlist || activeSetlistNonArchivedItems.length === 0) return;
     const prevIndex = songIndexInSetlist - 1;
     if (prevIndex >= 0) {
-      const prevSong = activeSetlist.itens[prevIndex].musica;
-      if (prevSong) {
-        setActiveSong(prevSong);
+      const prevSongObj = activeSetlistNonArchivedItems[prevIndex].musica;
+      if (prevSongObj) {
+        setActiveSong(prevSongObj);
         setSongIndexInSetlist(prevIndex);
         setSemitones(0);
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -253,17 +463,32 @@ export function App() {
     await updateSetlistItemsOrderDb(reorderedItemIds);
   };
 
-  // Adicionar música ao repertório ativo
-  const handleAddSongToActiveSetlist = (songId: string) => {
+  // Adicionar música ao repertório ativo (com persistência no Supabase e cache local)
+  const handleAddSongToActiveSetlist = async (songId: string) => {
     if (!activeSetlist) return;
     const song = songs.find(s => s.id === songId);
     if (!song) return;
 
+    if (song.arquivado) {
+      alert('Esta cifra está arquivada e não pode ser adicionada.');
+      return;
+    }
+
+    const alreadyIn = activeSetlist.itens.some(i => i.musica_id === songId || i.musica?.id === songId);
+    if (alreadyIn) {
+      alert('Esta música já está incluída neste repertório.');
+      return;
+    }
+
+    const nextOrder = activeSetlist.itens.length + 1;
+    // Persistir no Supabase
+    const dbItem = await addSongToSetlistDb(activeSetlist.id, song.id, nextOrder);
+
     const newItem = {
-      id: 'item-' + Date.now(),
+      id: dbItem?.id || ('item-' + Date.now()),
       setlist_id: activeSetlist.id,
       musica_id: song.id,
-      ordem: activeSetlist.itens.length + 1,
+      ordem: nextOrder,
       musica: song
     };
 
@@ -272,16 +497,58 @@ export function App() {
       itens: [...activeSetlist.itens, newItem]
     };
     setActiveSetlist(updatedSetlist);
-    setSetlists(prev => prev.map(s => (s.id === updatedSetlist.id ? updatedSetlist : s)));
+    setSetlists(prev => {
+      const next = prev.map(s => (s.id === updatedSetlist.id ? updatedSetlist : s));
+      saveAllSetlists(next);
+      return next;
+    });
   };
 
-  // Remover item do repertório
-  const handleRemoveSetlistItem = (itemId: string) => {
+  // Salvar tom transposto atual no texto ChordPro e tom original da cifra
+  const handleSaveCurrentKeyAsDefault = () => {
+    if (!activeSong || semitones === 0) return;
+    const newKey = parsedSong.key;
+    const updatedChordPro = transposeChordProText(activeSong.chordpro, semitones);
+    const updatedSong: Song = {
+      ...activeSong,
+      tom_original: newKey,
+      chordpro: updatedChordPro
+    };
+
+    setActiveSong(updatedSong);
+    setSemitones(0);
+
+    setSongs(prev => {
+      const next = prev.map(s => (s.id === updatedSong.id ? updatedSong : s));
+      saveCustomSong(updatedSong);
+      return next;
+    });
+
+    if (activeSetlist) {
+      const updatedItens = activeSetlist.itens.map(it =>
+        it.musica_id === updatedSong.id ? { ...it, musica: updatedSong } : it
+      );
+      const updatedSetlist = { ...activeSetlist, itens: updatedItens };
+      setActiveSetlist(updatedSetlist);
+      setSetlists(prev => prev.map(s => (s.id === updatedSetlist.id ? updatedSetlist : s)));
+    }
+
+    updateMusicaDb(updatedSong);
+    alert(`Tom ${newKey} salvo com sucesso como padrão da cifra!`);
+  };
+
+  // Remover item do repertório (com persistência no Supabase e cache local)
+  const handleRemoveSetlistItem = async (itemId: string) => {
     if (!activeSetlist) return;
+    await removeSongFromSetlistDb(itemId);
     const filtered = activeSetlist.itens.filter(i => i.id !== itemId);
     const updated = { ...activeSetlist, itens: filtered };
     setActiveSetlist(updated);
-    setSetlists(prev => prev.map(s => (s.id === updated.id ? updated : s)));
+    setSetlists(prev => {
+      const next = prev.map(s => (s.id === updated.id ? updated : s));
+      saveAllSetlists(next);
+      return next;
+    });
   };
 
   // Alternar privacidade do repertório
@@ -415,9 +682,7 @@ export function App() {
         next.add(song.id);
       }
 
-      try {
-        localStorage.setItem('cifralab_favorites', JSON.stringify(Array.from(next)));
-      } catch {}
+      saveFavorites(Array.from(next));
 
       // Sincronizar com setlist de Favoritos
       setSetlists(currentSetlists => {
@@ -526,22 +791,33 @@ ${song.chordpro}`;
     } catch {}
   };
 
+  // Alternar arquivamento de Cifra
+  const handleToggleArchiveSong = (song: Song) => {
+    const updatedArchived = !song.arquivado;
+    setSongs(prev =>
+      prev.map(s => (s.id === song.id ? { ...s, arquivado: updatedArchived } : s))
+    );
+    if (activeSong.id === song.id) {
+      setActiveSong(prev => ({ ...prev, arquivado: updatedArchived }));
+    }
+  };
+
+  // Salvar Capa do Repertório
+  const handleSaveSetlistCover = (newCoverUrl: string) => {
+    if (!editingSetlistPhoto) return;
+    const updated = { ...editingSetlistPhoto, cover_image: newCoverUrl };
+    if (activeSetlist?.id === updated.id) {
+      setActiveSetlist(updated);
+    }
+    setSetlists(prev => prev.map(s => (s.id === updated.id ? updated : s)));
+    setEditingSetlistPhoto(null);
+  };
+
   // Logout
   const handleLogout = async () => {
     await signOutUser();
     setUser(null);
     setScreenView('home');
-  };
-
-  // Fullscreen toggle
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen().catch(() => {});
-      setIsFullscreen(false);
-    }
   };
 
   // 1. Bloqueio de Acesso: Apenas pessoas logadas podem acessar
@@ -559,18 +835,13 @@ ${song.chordpro}`;
 
   return (
     <div className="min-h-screen bg-[#121212] text-zinc-100 flex flex-col antialiased selection:bg-orange-500/30 selection:text-orange-300">
-      {/* Header Global Adaptativo (Presente nas telas Home, Músicas e Repertório) */}
-      {screenView !== 'stage' && (
-        <GlobalHeader
-          currentView={screenView}
-          user={user}
-          onSearchSubmit={q => handleNavigateToSongsList({ search: q })}
-          onOpenNewSong={() => setIsCreateSongOpen(true)}
-          onToggleAIPanel={() => setIsAIPanelOpen(prev => !prev)}
-          onLogout={handleLogout}
-          onGoHome={() => setScreenView('home')}
-        />
-      )}
+      {/* Header Global Adaptativo (Presente em todas as telas) */}
+      <GlobalHeader
+        user={user}
+        onToggleAIPanel={() => setIsAIPanelOpen(prev => !prev)}
+        onLogout={handleLogout}
+        onGoHome={() => setScreenView('home')}
+      />
 
       {/* Container Principal com Suporte ao Chat Lateral Estilo IDE Antigravity */}
       <div className="flex-1 flex overflow-hidden">
@@ -582,14 +853,16 @@ ${song.chordpro}`;
             <HomeHubView
               songs={songs}
               setlists={setlists}
+              onSelectSong={handleSelectSongToPlay}
               onSelectSetlist={handleOpenSetlist}
               onCreateNewSetlist={() => setIsCreateSetlistOpen(true)}
               onNavigateToSongsList={handleNavigateToSongsList}
               onEditArtistPhoto={(name, avatar) => setEditingArtist({ name, avatar })}
+              onEditSetlistPhoto={(setlist) => setEditingSetlistPhoto(setlist)}
             />
           )}
 
-          {/* TELA 2: LISTAGEM DEDICADA DE MÚSICAS (Busca, Estilos, Cantores) */}
+          {/* TELA 2: CATÁLOGO E PESQUISA UNIFICADA (Tudo, Repertórios, Cifras, Artistas) */}
           {screenView === 'songs_list' && (
             <SongsListView
               songs={songs}
@@ -600,8 +873,20 @@ ${song.chordpro}`;
               initialSearch={songListFilters.search}
               initialStyle={songListFilters.style}
               initialArtist={songListFilters.artist}
+              initialTab={songListFilters.tab || 'all'}
               onBack={() => setScreenView('home')}
-              onSelectSong={handleSelectSongToPlay}
+              onSelectSong={song => {
+                handleSelectSongToPlay(song, { type: 'songs_list', filters: songListFilters });
+              }}
+              onCreateNewSetlist={() => setIsCreateSetlistOpen(true)}
+              onCreateNewSong={() => {
+                setEditingSong(null);
+                setIsCreateSongOpen(true);
+              }}
+              onEditArtistPhoto={(name, avatar) => setEditingArtist({ name, avatar })}
+              onEditSetlistPhoto={(setlist) => setEditingSetlistPhoto(setlist)}
+              onToggleArchiveSong={handleToggleArchiveSong}
+              onToggleArchiveSetlist={setlist => handleToggleArchiveSetlist(setlist.id)}
             />
           )}
 
@@ -623,60 +908,56 @@ ${song.chordpro}`;
               onSelectSongDirectly={(song, idx) => {
                 setActiveSong(song);
                 setSongIndexInSetlist(idx);
+                setSemitones(0);
+                setNavigationSource({ type: 'setlist', setlist: activeSetlist });
                 setScreenView('stage');
               }}
+              onEditSetlistPhoto={(setlist) => setEditingSetlistPhoto(setlist)}
             />
           )}
 
-          {/* TELA 4: PALCO / CIFRA (Design Cifra Club Fiel) */}
+          {/* TELA 4: PALCO / CIFRA */}
           {screenView === 'stage' && (
             <div className="flex-1 flex flex-col">
-              {/* Header com Navegador de Músicas do Show */}
-              <StageHeader
-                currentSong={activeSong}
-                currentSetlist={activeSetlist}
-                songIndexInSetlist={songIndexInSetlist}
-                totalSongsInSetlist={activeSetlist ? activeSetlist.itens.length : 1}
-                onPrevSong={handlePrevSong}
-                onNextSong={handleNextSong}
-                onBackToHome={() => setScreenView(activeSetlist ? 'setlist' : 'home')}
-                isAIPanelOpen={isAIPanelOpen}
-                onToggleAIPanel={() => setIsAIPanelOpen(prev => !prev)}
-                isFullscreen={isFullscreen}
-                onToggleFullscreen={toggleFullscreen}
-              />
+              {/* Barra de Topo do Palco Conforme Anexo: Voltar + Novo Repertório + Nova Cifra */}
+              <div className="max-w-5xl w-full mx-auto px-4 sm:px-8 pt-4 pb-2 flex items-center justify-between gap-3 select-none flex-wrap">
+                <button
+                  onClick={handleStageBack}
+                  className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-zinc-400 hover:text-white transition-colors self-start py-1"
+                >
+                  <ArrowLeft size={16} />
+                  <span>Voltar para {stageBackLabel}</span>
+                  {activeSetlist && activeSetlistNonArchivedItems.length > 0 && (
+                    <span className="px-2 py-0.5 rounded-md bg-zinc-800/90 border border-zinc-700/60 text-orange-400 text-xs font-mono font-bold">
+                      {songIndexInSetlist + 1}/{activeSetlistNonArchivedItems.length}
+                    </span>
+                  )}
+                </button>
 
-              {/* Corpo da Tela de Cifra com Sidebar Esquerda e Conteúdo */}
-              <div className="flex-1 flex flex-col lg:flex-row">
-                {/* Sidebar Esquerda de Palco (sem afinação e capotraste) */}
-                <div className={`${isMobileToolsOpen ? 'block' : 'hidden lg:block'}`}>
-                  <CifraClubSidebar
-                    onBack={() => setScreenView(activeSetlist ? 'setlist' : 'home')}
-                    isPlaying={isPlaying}
-                    speed={speed}
-                    isTemporarilyPaused={isTemporarilyPaused}
-                    onToggleScroll={togglePlay}
-                    onSpeedChange={setSpeed}
-                    columns={columns}
-                    onToggleColumns={() => setColumns(prev => (prev === 1 ? 2 : 1))}
-                    instrument={instrument}
-                    onToggleInstrument={() =>
-                      setInstrument(prev => (prev === 'cavaco' ? 'violao' : 'cavaco'))
-                    }
-                    currentKey={parsedSong.key}
-                    onTranspose={handleTranspose}
-                    showTablature={showTablature}
-                    onToggleTablature={() => setShowTablature(prev => !prev)}
-                    showDiagrams={showDiagrams}
-                    onToggleDiagrams={() => setShowDiagrams(prev => !prev)}
-                    isFavorite={favoriteSongIds.has(activeSong.id)}
-                    onToggleFavorite={() => handleToggleFavorite(activeSong)}
-                    onEditSong={handleEditActiveSong}
-                    onDownloadSong={() => handleDownloadSong(activeSong)}
-                  />
+                <div className="flex items-center gap-2.5">
+                  <button
+                    onClick={() => setIsCreateSetlistOpen(true)}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-750 text-xs sm:text-sm font-bold text-zinc-200 transition-colors border border-zinc-700 active:scale-95 shadow-sm"
+                  >
+                    <Plus size={15} className="text-orange-400" />
+                    <span>Novo Repertório</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setEditingSong(null);
+                      setIsCreateSongOpen(true);
+                    }}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-xs sm:text-sm font-bold text-white transition-colors active:scale-95 shadow-lg shadow-orange-500/20"
+                  >
+                    <Plus size={15} />
+                    <span>Nova Cifra</span>
+                  </button>
                 </div>
+              </div>
 
-                {/* Conteúdo Central da Cifra */}
+              {/* Conteúdo Central da Cifra (Menu lateral esquerdo removido) */}
+              <div className="flex-1 flex flex-col">
                 <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-8 py-6">
                   {viewMode === 'chordpro' && (
                     <ChordSheetView
@@ -692,6 +973,13 @@ ${song.chordpro}`;
                         setSelectedChord(chord);
                         setIsDictionaryOpen(true);
                       }}
+                      activeSetlist={activeSetlist}
+                      currentSongIndex={songIndexInSetlist}
+                      totalSongsInSetlist={activeSetlistNonArchivedItems.length}
+                      currentSong={activeSong}
+                      nextSong={nextSong}
+                      onAskAITransition={handleAskAITransition}
+                      showTransitionNotes={showTransitionNotes}
                     />
                   )}
 
@@ -706,6 +994,10 @@ ${song.chordpro}`;
                         setSelectedChord(chord);
                         setIsDictionaryOpen(true);
                       }}
+                      activeSetlist={activeSetlist}
+                      currentSongIndex={songIndexInSetlist}
+                      totalSongsInSetlist={activeSetlistNonArchivedItems.length}
+                      nextSong={nextSong}
                     />
                   )}
 
@@ -720,10 +1012,42 @@ ${song.chordpro}`;
                         setSelectedChord(chord);
                         setIsDictionaryOpen(true);
                       }}
+                      activeSetlist={activeSetlist}
+                      currentSongIndex={songIndexInSetlist}
+                      totalSongsInSetlist={activeSetlistNonArchivedItems.length}
+                      nextSong={nextSong}
                     />
                   )}
                 </main>
               </div>
+
+              {/* Barra Flutuante com Atalhos Rápidos na Cifra (Mobile e Palco) */}
+              <SongFloatingToolbar
+                currentKey={parsedSong.key}
+                originalKey={activeSong.tom_original}
+                semitones={semitones}
+                onTranspose={handleTranspose}
+                onResetTranspose={() => setSemitones(0)}
+                isPlaying={isPlaying}
+                speed={speed}
+                isTemporarilyPaused={isTemporarilyPaused}
+                onToggleScroll={togglePlay}
+                onSpeedChange={setSpeed}
+                scrollCycles={scrollCycles}
+                currentCycle={currentCycle}
+                onSetScrollCycles={setScrollCycles}
+                autoAdvanceEnabled={autoAdvanceEnabled}
+                onSetAutoAdvanceEnabled={setAutoAdvanceEnabled}
+                isInSetlist={Boolean(activeSetlist && activeSetlist.itens.length > 1)}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                onOpenOptions={() => setIsSongOptionsOpen(true)}
+                onToggleAIPanel={() => setIsAIPanelOpen(prev => !prev)}
+                onPrevSong={activeSetlist && activeSetlist.itens.length > 1 ? handlePrevSong : undefined}
+                onNextSong={activeSetlist && activeSetlist.itens.length > 1 ? handleNextSong : undefined}
+                hasPrevSong={songIndexInSetlist > 0}
+                hasNextSong={activeSetlist ? songIndexInSetlist < activeSetlist.itens.length - 1 : false}
+              />
             </div>
           )}
         </div>
@@ -742,16 +1066,87 @@ ${song.chordpro}`;
           onReorderSetlistFromAI={handleReorderSetlistFromAI}
           promptToExecute={pendingAIPrompt}
           onPromptExecuted={() => setPendingAIPrompt(null)}
+          userId={user?.id}
         />
       </div>
 
-      {/* Barra de Navegação Inferior para Mobile */}
+      {/* Barra de Navegação Inferior Global para Mobile e Desktop */}
       <MobileBottomNav
         currentView={screenView}
-        onNavigate={setScreenView}
+        activeCatalogTab={songListFilters.tab || 'all'}
+        onNavigate={handleBottomNavNavigate}
+        onNavigateCatalogTab={(tab) => {
+          setSongListFilters(prev => ({ ...prev, tab }));
+          setScreenView('songs_list');
+        }}
         onToggleAIPanel={() => setIsAIPanelOpen(prev => !prev)}
-        onToggleTools={() => setIsMobileToolsOpen(prev => !prev)}
-        hasActiveSong={!!activeSong}
+        isAIPanelOpen={isAIPanelOpen}
+      />
+
+      {/* Menu Deslizante de Opções Completas (Bottom Sheet) */}
+      <SongOptionsSheet
+        isOpen={isSongOptionsOpen}
+        onClose={() => setIsSongOptionsOpen(false)}
+        song={activeSong}
+        currentKey={parsedSong.key}
+        originalKey={activeSong.tom_original}
+        semitones={semitones}
+        onTranspose={handleTranspose}
+        isFavorite={favoriteSongIds.has(activeSong.id)}
+        onToggleFavorite={() => handleToggleFavorite(activeSong)}
+        onEditSong={handleEditActiveSong}
+        onOpenTabEditor={() => setIsTabEditorOpen(true)}
+        showTablature={showTablature}
+        onToggleTablature={() => setShowTablature(prev => !prev)}
+        showDiagrams={showDiagrams}
+        onToggleDiagrams={() => setShowDiagrams(prev => !prev)}
+        instrument={instrument}
+        onToggleInstrument={() =>
+          setInstrument(prev => (prev === 'cavaco' ? 'violao' : 'cavaco'))
+        }
+        fontSize={fontSize}
+        onFontSizeChange={delta =>
+          setFontSize(prev => Math.max(12, Math.min(32, prev + delta)))
+        }
+        columns={columns}
+        onToggleColumns={() => setColumns(prev => (prev === 1 ? 2 : 1))}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onOpenAIPanel={() => setIsAIPanelOpen(true)}
+        onOpenArtistsSearch={() => {
+          setSongListFilters({ tab: 'artists' });
+          setScreenView('songs_list');
+        }}
+        onOpenAITransitions={
+          activeSetlist && nextSong
+            ? () =>
+                handleAskAITransition(
+                  activeSong.titulo,
+                  nextSong.titulo,
+                  parsedSong.key,
+                  nextSong.tom_original
+                )
+            : undefined
+        }
+        onDownloadSong={() => handleDownloadSong(activeSong)}
+        isArchived={activeSong.arquivado}
+        onToggleArchive={() => handleToggleArchiveSong(activeSong)}
+        showTransitionNotes={showTransitionNotes}
+        onToggleTransitionNotes={() => setShowTransitionNotes(prev => !prev)}
+        scrollCycles={scrollCycles}
+        onSetScrollCycles={setScrollCycles}
+        autoAdvanceEnabled={autoAdvanceEnabled}
+        onSetAutoAdvanceEnabled={setAutoAdvanceEnabled}
+        isInSetlist={Boolean(activeSetlist && activeSetlist.itens.length > 1)}
+        onSaveCurrentKeyAsDefault={handleSaveCurrentKeyAsDefault}
+      />
+
+      {/* Modal Editor de Tablaturas ("TabLab") */}
+      <TablatureEditorModal
+        isOpen={isTabEditorOpen}
+        onClose={() => setIsTabEditorOpen(false)}
+        instrument={instrument}
+        onInsertTablature={handleInsertTablature}
       />
 
       {/* Modais */}
@@ -795,6 +1190,14 @@ ${song.chordpro}`;
         artistName={editingArtist?.name || ''}
         currentAvatarUrl={editingArtist?.avatar}
         onSaveAvatar={handleSaveArtistAvatar}
+      />
+
+      <EditSetlistPhotoModal
+        isOpen={!!editingSetlistPhoto}
+        onClose={() => setEditingSetlistPhoto(null)}
+        setlistName={editingSetlistPhoto?.nome || ''}
+        currentPhotoUrl={editingSetlistPhoto?.cover_image}
+        onSavePhoto={handleSaveSetlistCover}
       />
     </div>
   );

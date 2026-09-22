@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import type { Setlist, Song } from '../types/music';
 import {
   ArrowLeft,
@@ -16,7 +16,8 @@ import {
   Edit2,
   Check,
   Archive,
-  ArchiveRestore
+  ArchiveRestore,
+  Camera
 } from 'lucide-react';
 
 interface SetlistDetailViewProps {
@@ -33,6 +34,7 @@ interface SetlistDetailViewProps {
   onToggleAIPanel: () => void;
   onRequestAIReorder?: () => void;
   onSelectSongDirectly: (song: Song, indexInSetlist: number) => void;
+  onEditSetlistPhoto?: (setlist: Setlist) => void;
 }
 
 export const SetlistDetailView: React.FC<SetlistDetailViewProps> = ({
@@ -49,6 +51,7 @@ export const SetlistDetailView: React.FC<SetlistDetailViewProps> = ({
   onToggleAIPanel,
   onRequestAIReorder,
   onSelectSongDirectly,
+  onEditSetlistPhoto,
 }) => {
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -93,14 +96,22 @@ export const SetlistDetailView: React.FC<SetlistDetailViewProps> = ({
     setDraggedItemId(null);
   };
 
-  // Músicas que podem ser adicionadas (filtradas por busca não exata)
-  const availableToAdd = allAvailableSongs.filter(song => {
-    const q = addSongSearch.trim().toLowerCase();
-    const alreadyIn = setlist.itens.some(it => it.musica_id === song.id);
-    if (alreadyIn) return false;
-    if (!q) return true;
-    return song.titulo.toLowerCase().includes(q) || song.artista.toLowerCase().includes(q);
-  });
+  // Itens ativos do repertório (excluindo músicas arquivadas)
+  const activeItens = useMemo(() => {
+    return setlist.itens.filter(item => item.musica && !item.musica.arquivado);
+  }, [setlist.itens]);
+
+  // Músicas disponíveis para adicionar (excluindo arquivadas e já existentes)
+  const availableToAdd = useMemo(() => {
+    return allAvailableSongs.filter(song => {
+      if (song.arquivado) return false;
+      const alreadyIn = setlist.itens.some(it => it.musica_id === song.id || it.musica?.id === song.id);
+      if (alreadyIn) return false;
+      const q = addSongSearch.trim().toLowerCase();
+      if (!q) return true;
+      return song.titulo.toLowerCase().includes(q) || song.artista.toLowerCase().includes(q);
+    });
+  }, [allAvailableSongs, setlist.itens, addSongSearch]);
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 text-zinc-100 pb-20">
@@ -176,17 +187,36 @@ export const SetlistDetailView: React.FC<SetlistDetailViewProps> = ({
         </div>
       </div>
 
-      {/* Cartão de Informações do Repertório */}
-      <div className="bg-gradient-to-r from-zinc-900 to-zinc-850 border border-zinc-800 rounded-2xl p-5 sm:p-6 mb-8 flex flex-wrap items-center justify-between gap-4 shadow-xl">
-        <div className="flex items-center gap-4 flex-1 min-w-[280px]">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-700 flex items-center justify-center text-white shadow-lg shadow-orange-950/40 shrink-0">
-            <Music size={32} />
+      {/* Cartão de Informações do Repertório (Clean, Harmonioso & com Foto) */}
+      <div className="bg-gradient-to-r from-zinc-900 to-zinc-850 border border-zinc-800 rounded-2xl p-4 sm:p-5 mb-8 flex flex-wrap items-center justify-between gap-4 shadow-lg">
+        <div className="flex items-center gap-3.5 flex-1 min-w-[260px]">
+          <div className="relative group/cover shrink-0">
+            <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden shadow-md flex items-center justify-center text-white ${
+              setlist.cover_image ? 'bg-zinc-800' : 'bg-gradient-to-br from-orange-500 to-amber-700'
+            }`}>
+              {setlist.cover_image ? (
+                <img src={setlist.cover_image} alt={setlist.nome} className="w-full h-full object-cover" />
+              ) : (
+                <Music size={24} />
+              )}
+            </div>
+
+            {onEditSetlistPhoto && (
+              <button
+                type="button"
+                onClick={() => onEditSetlistPhoto(setlist)}
+                title="Alterar foto do repertório"
+                className="absolute -bottom-1 -right-1 p-1 rounded-full bg-zinc-900 border border-orange-500 text-orange-400 hover:bg-orange-500 hover:text-white transition-all shadow-md group-hover/cover:scale-110"
+              >
+                <Camera size={11} />
+              </button>
+            )}
           </div>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-mono uppercase tracking-widest text-orange-400 font-bold">
-                REPERTÓRIO • {setlist.itens.length} {setlist.itens.length === 1 ? 'MÚSICA' : 'MÚSICAS'}
+                REPERTÓRIO • {activeItens.length} {activeItens.length === 1 ? 'MÚSICA' : 'MÚSICAS'}
               </span>
               {setlist.arquivado && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/30">
@@ -202,21 +232,21 @@ export const SetlistDetailView: React.FC<SetlistDetailViewProps> = ({
                   value={editName}
                   onChange={e => setEditName(e.target.value)}
                   placeholder="Nome do repertório..."
-                  className="w-full bg-[#141414] border border-orange-500 rounded-xl px-3.5 py-2 text-base font-bold text-white outline-none focus:ring-1 focus:ring-orange-500/30"
+                  className="w-full bg-[#141414] border border-orange-500 rounded-xl px-3.5 py-1.5 text-sm font-bold text-white outline-none focus:ring-1 focus:ring-orange-500/30"
                 />
                 <input
                   type="text"
                   value={editDesc}
                   onChange={e => setEditDesc(e.target.value)}
                   placeholder="Descrição ou observações..."
-                  className="w-full bg-[#141414] border border-zinc-700 rounded-xl px-3.5 py-2 text-sm text-zinc-300 outline-none focus:border-orange-500"
+                  className="w-full bg-[#141414] border border-zinc-700 rounded-xl px-3.5 py-1.5 text-xs text-zinc-300 outline-none focus:border-orange-500"
                 />
                 <div className="flex items-center gap-2 pt-1">
                   <button
                     onClick={handleSaveHeader}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-orange-500 text-white rounded-xl text-xs sm:text-sm font-bold hover:bg-orange-600 shadow-md transition-all active:scale-95"
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 bg-orange-500 text-white rounded-xl text-xs font-bold hover:bg-orange-600 shadow-md transition-all active:scale-95"
                   >
-                    <Check size={14} /> Salvar
+                    <Check size={13} /> Salvar
                   </button>
                   <button
                     onClick={() => {
@@ -224,30 +254,30 @@ export const SetlistDetailView: React.FC<SetlistDetailViewProps> = ({
                       setEditDesc(setlist.descricao || '');
                       setIsEditingHeader(false);
                     }}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-zinc-800 text-zinc-300 rounded-xl text-xs sm:text-sm font-semibold hover:bg-zinc-700 transition-colors"
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 bg-zinc-800 text-zinc-300 rounded-xl text-xs font-semibold hover:bg-zinc-700 transition-colors"
                   >
-                    <X size={14} /> Cancelar
+                    <X size={13} /> Cancelar
                   </button>
                 </div>
               </div>
             ) : (
               <div>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <h1 className="text-xl sm:text-3xl font-black text-white">
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <h1 className="text-base sm:text-lg font-bold text-white leading-tight">
                     {setlist.nome}
                   </h1>
                   {onUpdateSetlistDetails && (
                     <button
                       onClick={() => setIsEditingHeader(true)}
                       title="Editar nome e descrição do repertório"
-                      className="p-1.5 rounded-lg text-zinc-400 hover:text-orange-400 hover:bg-zinc-800 transition-colors"
+                      className="p-1 rounded text-zinc-400 hover:text-orange-400 hover:bg-zinc-800 transition-colors"
                     >
-                      <Edit2 size={16} />
+                      <Edit2 size={13} />
                     </button>
                   )}
                 </div>
-                <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-                  Criado por <span className="text-zinc-200 font-semibold">{setlist.owner_name || 'Welington_sc'}</span>
+                <p className="text-[11px] text-zinc-400 mt-0.5 leading-tight truncate max-w-md">
+                  {setlist.owner_name || 'Welington_sc'}
                   {setlist.descricao ? ` • ${setlist.descricao}` : ''}
                 </p>
               </div>
@@ -266,37 +296,21 @@ export const SetlistDetailView: React.FC<SetlistDetailViewProps> = ({
 
           <button
             onClick={() => onPlaySetlist(0)}
-            disabled={setlist.itens.length === 0}
-            className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white font-extrabold text-xs sm:text-sm tracking-wide shadow-lg shadow-orange-500/20 active:scale-95 transition-all"
+            disabled={activeItens.length === 0}
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white font-bold text-xs sm:text-sm shadow-md shadow-orange-500/25 active:scale-95 transition-all"
           >
             <Play size={16} fill="currentColor" />
-            <span>TOCAR NO PALCO</span>
+            <span>Reproduzir</span>
           </button>
         </div>
       </div>
 
       {/* Lista de Músicas com Drag & Drop */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between pb-2 text-xs font-semibold text-zinc-400 uppercase tracking-wider px-2">
-          <div className="flex items-center gap-2">
-            <span>Arraste as músicas para organizar a ordem</span>
-            {onRequestAIReorder && setlist.itens.length > 1 && (
-              <button
-                onClick={onRequestAIReorder}
-                className="text-[11px] font-bold text-orange-400 hover:text-orange-300 flex items-center gap-1 bg-orange-500/10 hover:bg-orange-500/20 px-2 py-0.5 rounded border border-orange-500/30 transition-colors cursor-pointer"
-                title="Sugerir e aplicar ordem harmônica ideal com IA"
-              >
-                <Sparkles size={11} />
-                <span>Auto-ordenar com IA</span>
-              </button>
-            )}
-          </div>
-          <span>Ações</span>
-        </div>
 
-        {setlist.itens.length === 0 ? (
+        {activeItens.length === 0 ? (
           <div className="p-12 text-center bg-zinc-900/50 border border-zinc-800/80 rounded-2xl">
-            <p className="text-sm text-zinc-400 mb-3">Este repertório ainda não tem nenhuma música.</p>
+            <p className="text-sm text-zinc-400 mb-3">Este repertório ainda não tem nenhuma música ativa.</p>
             <button
               onClick={() => setIsAddModalOpen(true)}
               className="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold"
@@ -305,7 +319,7 @@ export const SetlistDetailView: React.FC<SetlistDetailViewProps> = ({
             </button>
           </div>
         ) : (
-          setlist.itens.map((item, idx) => {
+          activeItens.map((item, idx) => {
             const song = item.musica;
             if (!song) return null;
             const isDragging = draggedItemId === item.id;

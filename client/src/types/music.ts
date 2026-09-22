@@ -13,6 +13,7 @@ export interface Song {
   tom_original: string;
   chordpro: string;
   publico: boolean;
+  arquivado?: boolean;
   avatar_url?: string;
   created_at?: string;
 }
@@ -35,6 +36,7 @@ export interface Setlist {
   publico: boolean;
   arquivado?: boolean;
   cover_gradient?: string;
+  cover_image?: string;
   itens: SetlistItem[];
   created_at?: string;
 }

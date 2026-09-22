@@ -173,19 +173,6 @@ Eu can[G]tarei da bon[D]dade de [G]Deus`
 
 export const DEFAULT_SETLISTS: Setlist[] = [
   {
-    id: 'set-1',
-    nome: 'Recentes',
-    descricao: 'Últimas músicas tocadas no palco',
-    owner_name: 'Welington_sc',
-    publico: true,
-    cover_gradient: 'from-orange-500 to-amber-600',
-    itens: [
-      { id: 'item-1', setlist_id: 'set-1', musica_id: 's-1', ordem: 1, musica: DEFAULT_SONGS[0] },
-      { id: 'item-2', setlist_id: 'set-1', musica_id: 's-2', ordem: 2, musica: DEFAULT_SONGS[1] },
-      { id: 'item-3', setlist_id: 'set-1', musica_id: 's-3', ordem: 3, musica: DEFAULT_SONGS[2] }
-    ]
-  },
-  {
     id: 'set-2',
     nome: 'Favoritas',
     descricao: 'Clássicos que não podem faltar no show',
@@ -212,27 +199,42 @@ export const DEFAULT_SETLISTS: Setlist[] = [
   }
 ];
 
-// Métodos de Autenticação Supabase
+// Métodos de Autenticação Supabase (Acesso restrito com persistência de sessão)
 export async function getCurrentUser(): Promise<UserProfile | null> {
   try {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) {
-      // Retornar perfil demo se não autenticado
-      const cached = localStorage.getItem('cifralab_user');
-      return cached ? JSON.parse(cached) : {
-        id: 'demo-user',
-        email: 'welington@cifralab.pro',
-        name: 'Welington Silva',
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop'
+    if (session?.user) {
+      const user: UserProfile = {
+        id: session.user.id,
+        email: session.user.email || '',
+        name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'Músico',
+        avatar: session.user.user_metadata?.avatar_url
       };
+      localStorage.setItem('cifralab_user', JSON.stringify(user));
+      return user;
     }
-    return {
-      id: session.user.id,
-      email: session.user.email || '',
-      name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'Músico',
-      avatar: session.user.user_metadata?.avatar_url
-    };
+
+    // Se não há sessão Supabase imediata (ex: modo offline, fallback rápido, reload de página),
+    // verificar se o usuário já estava autenticado e salvo localmente
+    const saved = localStorage.getItem('cifralab_user');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.id) {
+          return parsed as UserProfile;
+        }
+      } catch {}
+    }
+
+    return null;
   } catch {
+    // Fallback seguro em caso de erro na rede do Supabase
+    const saved = localStorage.getItem('cifralab_user');
+    if (saved) {
+      try {
+        return JSON.parse(saved) as UserProfile;
+      } catch {}
+    }
     return null;
   }
 }
@@ -363,6 +365,7 @@ export async function fetchSetlists(): Promise<Setlist[]> {
       publico: s.publico,
       arquivado: s.arquivado || false,
       cover_gradient: s.cover_gradient || 'from-orange-500 to-amber-700',
+      cover_image: s.cover_image,
       itens: (s.setlist_itens || [])
         .map((it: any) => ({
           id: it.id,
@@ -374,7 +377,7 @@ export async function fetchSetlists(): Promise<Setlist[]> {
         }))
         .sort((a: any, b: any) => a.ordem - b.ordem),
       created_at: s.created_at
-    }));
+    })).filter((s: Setlist) => s.id !== 'set-1' && s.nome.trim().toLowerCase() !== 'recentes');
 
     return mapped;
   } catch {
@@ -428,10 +431,13 @@ export async function updateSetlistItemsOrderDb(reorderedItemIds: string[]): Pro
   try {
     for (let idx = 0; idx < reorderedItemIds.length; idx++) {
       const itemId = reorderedItemIds[idx];
-      await supabase
-        .from('setlist_itens')
-        .update({ ordem: idx + 1 })
-        .eq('id', itemId);
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(itemId);
+      if (isUuid) {
+        await supabase
+          .from('setlist_itens')
+          .update({ ordem: idx + 1 })
+          .eq('id', itemId);
+      }
     }
     return true;
   } catch (err) {
@@ -439,4 +445,130 @@ export async function updateSetlistItemsOrderDb(reorderedItemIds: string[]): Pro
     return false;
   }
 }
+
+/**
+ * Adiciona uma música a um repertório existente no Supabase
+ */
+export async function addSongToSetlistDb(
+  setlistId: string,
+  songId: string,
+  ordem: number
+): Promise<{ id: string; setlist_id: string; musica_id: string; ordem: number; musica?: any } | null> {
+  try {
+    const isSetlistUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(setlistId);
+    const isSongUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(songId);
+
+    if (isSetlistUuid && isSongUuid) {
+      const { data, error } = await supabase
+        .from('setlist_itens')
+        .insert({
+          setlist_id: setlistId,
+          musica_id: songId,
+          ordem
+        })
+        .select('*, musicas(*)')
+        .single();
+
+      if (!error && data) {
+        return {
+          id: data.id,
+          setlist_id: data.setlist_id,
+          musica_id: data.musica_id,
+          ordem: data.ordem,
+          musica: data.musicas
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('Erro ao inserir item de setlist no Supabase:', err);
+  }
+  return null;
+}
+
+/**
+ * Remove um item de repertório no Supabase
+ */
+export async function removeSongFromSetlistDb(itemId: string): Promise<boolean> {
+  try {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(itemId);
+    if (isUuid) {
+      const { error } = await supabase
+        .from('setlist_itens')
+        .delete()
+        .eq('id', itemId);
+      return !error;
+    }
+  } catch (err) {
+    console.warn('Erro ao remover item de setlist no Supabase:', err);
+  }
+  return false;
+}
+
+/**
+ * Persistência de Anotações de Palco no Supabase
+ */
+export async function saveSetlistAnnotationDb(cue: any): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('setlist_anotacoes')
+      .upsert({
+        id: cue.id,
+        setlist_id: cue.setlistId,
+        from_song_id: cue.fromSongId,
+        to_song_id: cue.toSongId,
+        chords: cue.chords,
+        notes: cue.notes,
+        updated_at: new Date().toISOString()
+      });
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Persistência de Conversas e Histórico de IA por Usuário no Supabase
+ */
+export async function fetchUserAiSessionsDb(userId: string): Promise<any[] | null> {
+  if (!userId) return null;
+  try {
+    const { data, error } = await supabase
+      .from('user_ai_chats')
+      .select('*')
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false });
+
+    if (!error && data && data.length > 0) {
+      return data.map((d: any) => ({
+        id: d.session_id || d.id,
+        title: d.title || 'Conversa Principal',
+        createdAt: d.created_at,
+        updatedAt: d.updated_at,
+        messages: typeof d.messages === 'string' ? JSON.parse(d.messages) : d.messages
+      }));
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+export async function saveUserAiSessionDb(userId: string, session: any): Promise<boolean> {
+  if (!userId || !session) return false;
+  try {
+    const { error } = await supabase
+      .from('user_ai_chats')
+      .upsert({
+        user_id: userId,
+        session_id: session.id,
+        title: session.title,
+        messages: session.messages,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id,session_id' });
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
 

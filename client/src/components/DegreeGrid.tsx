@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ParsedSong, ViewMode, InstrumentType } from '../types/music';
+import type { ParsedSong, ViewMode, InstrumentType, Setlist, Song } from '../types/music';
 import { chordToHarmonicDegree } from '../chordEngine/functionalHarmony';
 import { StageTabsHeader } from './StageTabsHeader';
 import { ChordDiagram } from './ChordDiagram';
@@ -12,6 +12,10 @@ interface DegreeGridProps {
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
   onSelectChord: (chord: string) => void;
+  activeSetlist?: Setlist | null;
+  currentSongIndex?: number;
+  totalSongsInSetlist?: number;
+  nextSong?: Song;
 }
 
 export const DegreeGrid: React.FC<DegreeGridProps> = ({
@@ -21,6 +25,10 @@ export const DegreeGrid: React.FC<DegreeGridProps> = ({
   viewMode,
   onViewModeChange,
   onSelectChord,
+  activeSetlist,
+  currentSongIndex,
+  totalSongsInSetlist,
+  nextSong,
 }) => {
   const chordSequence: string[] = [];
   parsedSong.lines.forEach(line => {
@@ -49,6 +57,10 @@ export const DegreeGrid: React.FC<DegreeGridProps> = ({
         artist={parsedSong.artist}
         viewMode={viewMode}
         onViewModeChange={onViewModeChange}
+        activeSetlist={activeSetlist}
+        currentSongIndex={currentSongIndex}
+        totalSongsInSetlist={totalSongsInSetlist}
+        nextSong={nextSong}
       />
 
       {/* Carrossel Horizontal de Diagramas SVG de Acordes com Troca de Forma */}

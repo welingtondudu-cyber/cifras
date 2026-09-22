@@ -1,8 +1,9 @@
 import React from 'react';
-import type { ParsedSong, InstrumentType, ViewMode } from '../types/music';
+import type { ParsedSong, InstrumentType, ViewMode, Song, Setlist } from '../types/music';
 import { ChordDiagram } from './ChordDiagram';
 import { getChordShape } from '../chordEngine/chordShapes';
 import { StageTabsHeader } from './StageTabsHeader';
+import { StageTransitionCue } from './StageTransitionCue';
 
 interface ChordSheetViewProps {
   parsedSong: ParsedSong;
@@ -14,6 +15,13 @@ interface ChordSheetViewProps {
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
   onSelectChord: (chord: string) => void;
+  activeSetlist?: Setlist | null;
+  currentSongIndex?: number;
+  totalSongsInSetlist?: number;
+  currentSong?: Song;
+  nextSong?: Song;
+  onAskAITransition?: (fromTitle: string, toTitle: string, fromKey: string, toKey: string) => void;
+  showTransitionNotes?: boolean;
 }
 
 export const ChordSheetView: React.FC<ChordSheetViewProps> = ({
@@ -26,17 +34,28 @@ export const ChordSheetView: React.FC<ChordSheetViewProps> = ({
   viewMode,
   onViewModeChange,
   onSelectChord,
+  activeSetlist,
+  currentSongIndex,
+  totalSongsInSetlist,
+  currentSong,
+  nextSong,
+  onAskAITransition,
+  showTransitionNotes = true,
 }) => {
   const [chordVariations, setChordVariations] = React.useState<Record<string, number>>({});
 
   return (
-    <div className="text-zinc-100 font-sans select-text pb-20">
+    <div className="text-zinc-100 font-sans select-text pb-28">
       {/* Cabeçalho Unificado de Abas */}
       <StageTabsHeader
         title={parsedSong.title}
         artist={parsedSong.artist}
         viewMode={viewMode}
         onViewModeChange={onViewModeChange}
+        activeSetlist={activeSetlist}
+        currentSongIndex={currentSongIndex}
+        totalSongsInSetlist={totalSongsInSetlist}
+        nextSong={nextSong}
       />
 
       {/* Carrossel Horizontal de Diagramas SVG de Acordes com Troca de Forma */}
@@ -77,10 +96,23 @@ export const ChordSheetView: React.FC<ChordSheetViewProps> = ({
         </div>
       )}
 
-      {/* Metadados rápidos: Tom (mesma fonte e tamanho da tablatura) */}
-      <div className="mb-5 font-mono text-sm leading-relaxed text-zinc-300">
-        Tom: <span className="font-bold text-orange-500">{parsedSong.key}</span>
+      {/* Metadados rápidos: Tom */}
+      <div className="mb-3 font-mono text-sm leading-relaxed text-zinc-300 flex items-center justify-between">
+        <div>
+          Tom: <span className="font-bold text-orange-500">{parsedSong.key}</span>
+        </div>
       </div>
+
+      {/* Balão de Transição Harmônica para o Palco (quando em repertório) */}
+      {activeSetlist && currentSong && nextSong && (
+        <StageTransitionCue
+          setlistId={activeSetlist.id}
+          currentSong={currentSong}
+          nextSong={nextSong}
+          onAskAITransition={onAskAITransition}
+          isVisible={showTransitionNotes}
+        />
+      )}
 
       {/* Letra e Cifra com suporte a 1 ou 2 colunas */}
       <div
