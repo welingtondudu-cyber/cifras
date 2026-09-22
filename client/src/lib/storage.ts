@@ -56,7 +56,6 @@ export function saveCustomSong(song: Song): Song[] {
   }
 }
 
-// 3. Repertórios Customizados e Persistência Híbrida
 export function getSavedCustomSetlists(): Setlist[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.CUSTOM_SETLISTS);
@@ -69,11 +68,96 @@ export function getSavedCustomSetlists(): Setlist[] {
 
 export function saveAllSetlists(setlists: Setlist[]): void {
   try {
-    localStorage.setItem(STORAGE_KEYS.CUSTOM_SETLISTS, JSON.stringify(setlists));
+    const clean = setlists.filter(s => s.id !== 'set-1' && s.nome.trim().toLowerCase() !== 'recentes');
+    localStorage.setItem(STORAGE_KEYS.CUSTOM_SETLISTS, JSON.stringify(clean));
   } catch (err) {
     console.error('Erro ao salvar repertórios em cache:', err);
   }
 }
+
+/**
+ * Mescla músicas do Supabase com as salvas localmente pelo usuário.
+ * Músicas criadas localmente que ainda não estão no banco são PRESERVADAS.
+ */
+export function mergeSongsWithLocal(dbSongs: Song[], localSongs: Song[]): Song[] {
+  const map = new Map<string, Song>();
+
+  // 1. Adiciona músicas vindas do Supabase
+  for (const s of dbSongs) {
+    if (s && s.id) {
+      map.set(s.id, s);
+    }
+  }
+
+  // 2. Mescla ou sobrepõe com as customizações/músicas locais do usuário
+  for (const local of localSongs) {
+    if (local && local.id) {
+      map.set(local.id, local);
+    }
+  }
+
+  const result = Array.from(map.values());
+  return result.length > 0 ? result : (dbSongs.length > 0 ? dbSongs : DEFAULT_SONGS);
+}
+
+/**
+ * Mescla repertórios do Supabase com os salvos localmente pelo usuário.
+ * 1. Repertórios criados localmente que não estão no Supabase NUNCA são apagados.
+ * 2. Músicas/itens adicionados localmente a um repertório NUNCA são perdidos.
+ */
+export function mergeSetlistsWithLocal(dbSetlists: Setlist[], localSetlists: Setlist[]): Setlist[] {
+  const map = new Map<string, Setlist>();
+
+  // 1. Inicia com os repertórios do Supabase (filtrando 'recentes' / 'set-1')
+  for (const dbSet of dbSetlists) {
+    if (dbSet && dbSet.id && dbSet.id !== 'set-1' && dbSet.nome.trim().toLowerCase() !== 'recentes') {
+      map.set(dbSet.id, { ...dbSet, itens: dbSet.itens || [] });
+    }
+  }
+
+  // 2. Mescla com os repertórios locais do usuário
+  for (const localSet of localSetlists) {
+    if (!localSet || !localSet.id || localSet.id === 'set-1' || localSet.nome.trim().toLowerCase() === 'recentes') {
+      continue;
+    }
+
+    const existingInDb = map.get(localSet.id);
+    if (!existingInDb) {
+      // Repertório criado localmente que não existe no Supabase: PRESERVA!
+      map.set(localSet.id, localSet);
+    } else {
+      // Repertório existe em ambos: mescla preservando itens adicionados localmente
+      const localItens = localSet.itens || [];
+      const dbItens = existingInDb.itens || [];
+
+      const itemMap = new Map<string, any>();
+      for (const it of dbItens) {
+        const key = it.musica_id || it.id;
+        itemMap.set(key, it);
+      }
+      for (const it of localItens) {
+        const key = it.musica_id || it.id;
+        itemMap.set(key, it);
+      }
+
+      const mergedItens = Array.from(itemMap.values()).map((it, idx) => ({
+        ...it,
+        ordem: idx + 1
+      }));
+
+      map.set(localSet.id, {
+        ...existingInDb,
+        ...localSet,
+        cover_image: localSet.cover_image || existingInDb.cover_image,
+        itens: mergedItens.length > 0 ? mergedItens : (localItens.length > 0 ? localItens : dbItens)
+      });
+    }
+  }
+
+  const result = Array.from(map.values());
+  return result.length > 0 ? result : (dbSetlists.length > 0 ? dbSetlists : DEFAULT_SETLISTS);
+}
+
 
 // 4. Balões de Transição e Anotações de Palco (por item de setlist ou par de músicas)
 export interface TransitionCue {

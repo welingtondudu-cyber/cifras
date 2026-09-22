@@ -1,5 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Song, Setlist, UserProfile } from '../types/music';
+import {
+  getSavedCustomSongs,
+  saveCustomSong,
+  getSavedCustomSetlists,
+  saveAllSetlists,
+  mergeSongsWithLocal,
+  mergeSetlistsWithLocal
+} from './storage';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://fftznrmbbndppzylfnnh.supabase.co';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_nDggNYVO1Hv0fjoDn7e0jg_dFptcvQE';
@@ -285,6 +293,7 @@ export async function signOutUser() {
 
 // Métodos de Músicas
 export async function fetchMusicas(): Promise<Song[]> {
+  const localSongs = getSavedCustomSongs();
   try {
     const { data, error } = await supabase
       .from('musicas')
@@ -292,15 +301,27 @@ export async function fetchMusicas(): Promise<Song[]> {
       .order('titulo', { ascending: true });
 
     if (error || !data || data.length === 0) {
-      return DEFAULT_SONGS;
+      return mergeSongsWithLocal(DEFAULT_SONGS, localSongs);
     }
-    return data as Song[];
+    return mergeSongsWithLocal(data as Song[], localSongs);
   } catch {
-    return DEFAULT_SONGS;
+    return mergeSongsWithLocal(DEFAULT_SONGS, localSongs);
   }
 }
 
-export async function createMusicaDb(song: Omit<Song, 'id'>): Promise<Song | null> {
+export async function createMusicaDb(song: Omit<Song, 'id'>): Promise<Song> {
+  const generatedId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : 'song-' + Date.now();
+
+  const newSong: Song = {
+    ...song,
+    id: generatedId
+  };
+
+  // Salva localmente de imediato
+  saveCustomSong(newSong);
+
   try {
     const { data, error } = await supabase
       .from('musicas')
@@ -315,15 +336,20 @@ export async function createMusicaDb(song: Omit<Song, 'id'>): Promise<Song | nul
       .select()
       .single();
 
-    if (error || !data) return null;
-    return data as Song;
+    if (!error && data) {
+      const savedDbSong = data as Song;
+      saveCustomSong(savedDbSong);
+      return savedDbSong;
+    }
   } catch (err) {
-    console.error('Erro ao inserir música no Supabase:', err);
-    return null;
+    console.warn('Persistindo música em cache local (modo resiliente):', err);
   }
+
+  return newSong;
 }
 
 export async function updateMusicaDb(song: Song): Promise<boolean> {
+  saveCustomSong(song);
   try {
     const { error } = await supabase
       .from('musicas')
@@ -346,6 +372,7 @@ export async function updateMusicaDb(song: Song): Promise<boolean> {
 
 // Métodos de Setlists
 export async function fetchSetlists(): Promise<Setlist[]> {
+  const localSetlists = getSavedCustomSetlists();
   try {
     const { data, error } = await supabase
       .from('setlists')
@@ -353,7 +380,7 @@ export async function fetchSetlists(): Promise<Setlist[]> {
       .order('created_at', { ascending: false });
 
     if (error || !data || data.length === 0) {
-      return DEFAULT_SETLISTS;
+      return mergeSetlistsWithLocal(DEFAULT_SETLISTS, localSetlists);
     }
 
     const mapped: Setlist[] = data.map((s: any) => ({
@@ -379,9 +406,11 @@ export async function fetchSetlists(): Promise<Setlist[]> {
       created_at: s.created_at
     })).filter((s: Setlist) => s.id !== 'set-1' && s.nome.trim().toLowerCase() !== 'recentes');
 
-    return mapped;
+    const merged = mergeSetlistsWithLocal(mapped, localSetlists);
+    saveAllSetlists(merged);
+    return merged;
   } catch {
-    return DEFAULT_SETLISTS;
+    return mergeSetlistsWithLocal(DEFAULT_SETLISTS, localSetlists);
   }
 }
 
@@ -390,7 +419,40 @@ export async function createSetlistDb(setlist: {
   descricao?: string;
   publico?: boolean;
   songIds: string[];
-}): Promise<Setlist | null> {
+  allAvailableSongs?: Song[];
+}): Promise<Setlist> {
+  const generatedId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : 'set-' + Date.now();
+
+  const allSongs = setlist.allAvailableSongs || DEFAULT_SONGS;
+  const items = (setlist.songIds || []).map((sid, idx) => {
+    const foundSong = allSongs.find(s => s.id === sid);
+    return {
+      id: 'item-' + Date.now() + '-' + idx,
+      setlist_id: generatedId,
+      musica_id: sid,
+      ordem: idx + 1,
+      musica: foundSong
+    };
+  });
+
+  const newSetlist: Setlist = {
+    id: generatedId,
+    nome: setlist.nome,
+    descricao: setlist.descricao || '',
+    owner_name: 'Welington_sc',
+    publico: setlist.publico ?? true,
+    cover_gradient: 'from-orange-500 to-amber-700',
+    itens: items,
+    created_at: new Date().toISOString()
+  };
+
+  // Salvar imediatamente no cache local para nunca perder
+  const currentSaved = getSavedCustomSetlists();
+  saveAllSetlists([newSetlist, ...currentSaved.filter(s => s.id !== newSetlist.id)]);
+
+  // Tentar sincronizar com o Supabase
   try {
     const { data: setlistData, error: sError } = await supabase
       .from('setlists')
@@ -402,25 +464,28 @@ export async function createSetlistDb(setlist: {
       .select()
       .single();
 
-    if (sError || !setlistData) return null;
-
-    if (setlist.songIds && setlist.songIds.length > 0) {
-      const itemsToInsert = setlist.songIds.map((sid, idx) => ({
-        setlist_id: setlistData.id,
-        musica_id: sid,
-        ordem: idx + 1
-      }));
-
-      await supabase.from('setlist_itens').insert(itemsToInsert);
+    if (!sError && setlistData) {
+      if (setlist.songIds && setlist.songIds.length > 0) {
+        const itemsToInsert = setlist.songIds.map((sid, idx) => ({
+          setlist_id: setlistData.id,
+          musica_id: sid,
+          ordem: idx + 1
+        }));
+        await supabase.from('setlist_itens').insert(itemsToInsert);
+      }
+      const remoteSetlist: Setlist = {
+        ...newSetlist,
+        id: setlistData.id
+      };
+      const updatedList = [remoteSetlist, ...currentSaved.filter(s => s.id !== newSetlist.id && s.id !== remoteSetlist.id)];
+      saveAllSetlists(updatedList);
+      return remoteSetlist;
     }
-
-    // Retornar o setlist recém-criado já populado
-    const allSetlists = await fetchSetlists();
-    return allSetlists.find(s => s.id === setlistData.id) || null;
   } catch (err) {
-    console.error('Erro ao criar setlist no Supabase:', err);
-    return null;
+    console.warn('Persistindo repertório em cache local (modo resiliente):', err);
   }
+
+  return newSetlist;
 }
 
 /**
@@ -453,7 +518,14 @@ export async function addSongToSetlistDb(
   setlistId: string,
   songId: string,
   ordem: number
-): Promise<{ id: string; setlist_id: string; musica_id: string; ordem: number; musica?: any } | null> {
+): Promise<{ id: string; setlist_id: string; musica_id: string; ordem: number; musica?: any }> {
+  const fallbackItem = {
+    id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : ('item-' + Date.now()),
+    setlist_id: setlistId,
+    musica_id: songId,
+    ordem
+  };
+
   try {
     const isSetlistUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(setlistId);
     const isSongUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(songId);
@@ -480,9 +552,10 @@ export async function addSongToSetlistDb(
       }
     }
   } catch (err) {
-    console.warn('Erro ao inserir item de setlist no Supabase:', err);
+    console.warn('Item adicionado em modo resiliente local:', err);
   }
-  return null;
+
+  return fallbackItem;
 }
 
 /**

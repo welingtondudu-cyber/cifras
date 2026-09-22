@@ -459,11 +459,15 @@ export function App() {
 
     const updatedSetlist = { ...activeSetlist, itens: reorderedItens };
     setActiveSetlist(updatedSetlist);
-    setSetlists(prev => prev.map(s => (s.id === updatedSetlist.id ? updatedSetlist : s)));
+    setSetlists(prev => {
+      const next = prev.map(s => (s.id === updatedSetlist.id ? updatedSetlist : s));
+      saveAllSetlists(next);
+      return next;
+    });
     await updateSetlistItemsOrderDb(reorderedItemIds);
   };
 
-  // Adicionar música ao repertório ativo (com persistência no Supabase e cache local)
+  // Adicionar música ao repertório ativo (com persistência garantida)
   const handleAddSongToActiveSetlist = async (songId: string) => {
     if (!activeSetlist) return;
     const song = songs.find(s => s.id === songId);
@@ -474,14 +478,15 @@ export function App() {
       return;
     }
 
-    const alreadyIn = activeSetlist.itens.some(i => i.musica_id === songId || i.musica?.id === songId);
+    const currentItens = activeSetlist.itens || [];
+    const alreadyIn = currentItens.some(i => i.musica_id === songId || i.musica?.id === songId);
     if (alreadyIn) {
       alert('Esta música já está incluída neste repertório.');
       return;
     }
 
-    const nextOrder = activeSetlist.itens.length + 1;
-    // Persistir no Supabase
+    const nextOrder = currentItens.length + 1;
+    // Persistir no Supabase ou gerar ID resiliente
     const dbItem = await addSongToSetlistDb(activeSetlist.id, song.id, nextOrder);
 
     const newItem = {
@@ -494,7 +499,7 @@ export function App() {
 
     const updatedSetlist = {
       ...activeSetlist,
-      itens: [...activeSetlist.itens, newItem]
+      itens: [...currentItens, newItem]
     };
     setActiveSetlist(updatedSetlist);
     setSetlists(prev => {
@@ -559,52 +564,27 @@ export function App() {
     setSetlists(prev => prev.map(s => (s.id === updated.id ? updated : s)));
   };
 
-  // Criar Repertório (Manualmente no Supabase + Estado Local)
+  // Criar Repertório (Sincronizado + Garantia de Persistência Local)
   const handleCreateSetlist = async (
     name: string,
     description: string,
     isPublic: boolean,
     selectedSongIds: string[]
   ) => {
-    const dbSetlist = await createSetlistDb({
+    const created = await createSetlistDb({
       nome: name,
       descricao: description,
       publico: isPublic,
-      songIds: selectedSongIds
+      songIds: selectedSongIds,
+      allAvailableSongs: songs
     });
 
-    if (dbSetlist) {
-      setSetlists(prev => [dbSetlist, ...prev]);
-      setActiveSetlist(dbSetlist);
-      setScreenView('setlist');
-      return;
-    }
-
-    // Fallback local caso offline
-    const newSetlistId = 'set-' + Date.now();
-    const items = selectedSongIds.map((sid, idx) => {
-      const songFound = songs.find(s => s.id === sid);
-      return {
-        id: 'item-' + Date.now() + '-' + idx,
-        setlist_id: newSetlistId,
-        musica_id: sid,
-        ordem: idx + 1,
-        musica: songFound
-      };
+    setSetlists(prev => {
+      const next = [created, ...prev.filter(s => s.id !== created.id)];
+      saveAllSetlists(next);
+      return next;
     });
-
-    const newSetlist: Setlist = {
-      id: newSetlistId,
-      nome: name,
-      descricao: description,
-      owner_name: user?.name || 'Welington_sc',
-      publico: isPublic,
-      cover_gradient: 'from-orange-500 to-amber-700',
-      itens: items
-    };
-
-    setSetlists(prev => [newSetlist, ...prev]);
-    setActiveSetlist(newSetlist);
+    setActiveSetlist(created);
     setScreenView('setlist');
   };
 
@@ -618,32 +598,26 @@ export function App() {
     handleReorderAllSetlistItems(reorderedItemIds);
   };
 
-  // Cadastrar nova cifra individual (Supabase + Estado Local)
+  // Cadastrar nova cifra individual (Sincronizado + Garantia de Persistência Local)
   const handleAddSong = async (newSongData: Omit<Song, 'id'>) => {
-    const dbSong = await createMusicaDb(newSongData);
-    const createdSong: Song = dbSong || {
-      ...newSongData,
-      id: 'song-' + Date.now()
-    };
-    setSongs(prev => [createdSong, ...prev]);
+    const createdSong = await createMusicaDb(newSongData);
+    setSongs(prev => {
+      const next = [createdSong, ...prev.filter(s => s.id !== createdSong.id)];
+      return next;
+    });
     setActiveSong(createdSong);
     setScreenView('stage');
   };
 
-  // Upload massivo de cifras (Supabase + Estado Local)
+  // Upload massivo de cifras (Sincronizado + Garantia de Persistência Local)
   const handleBatchAddSongs = async (newSongsData: Omit<Song, 'id'>[]) => {
     const createdList: Song[] = [];
     for (let i = 0; i < newSongsData.length; i++) {
       const data = newSongsData[i];
-      const dbSong = await createMusicaDb(data);
-      createdList.push(
-        dbSong || {
-          ...data,
-          id: 'song-bulk-' + Date.now() + '-' + i
-        }
-      );
+      const created = await createMusicaDb(data);
+      createdList.push(created);
     }
-    setSongs(prev => [...createdList, ...prev]);
+    setSongs(prev => [...createdList, ...prev.filter(s => !createdList.some(c => c.id === s.id))]);
     if (createdList.length > 0) {
       setActiveSong(createdList[0]);
     }
@@ -753,8 +727,8 @@ ${song.chordpro}`;
 
   // Arquivar / Desarquivar Repertório
   const handleToggleArchiveSetlist = (setlistId: string) => {
-    setSetlists(prev =>
-      prev.map(s => {
+    setSetlists(prev => {
+      const next = prev.map(s => {
         if (s.id === setlistId) {
           const updated = { ...s, arquivado: !s.arquivado };
           if (activeSetlist?.id === setlistId) {
@@ -763,8 +737,10 @@ ${song.chordpro}`;
           return updated;
         }
         return s;
-      })
-    );
+      });
+      saveAllSetlists(next);
+      return next;
+    });
   };
 
   // Editar Nome e Descrição do Repertório
@@ -772,7 +748,11 @@ ${song.chordpro}`;
     if (!activeSetlist) return;
     const updated = { ...activeSetlist, nome: name, descricao: description };
     setActiveSetlist(updated);
-    setSetlists(prev => prev.map(s => (s.id === updated.id ? updated : s)));
+    setSetlists(prev => {
+      const next = prev.map(s => (s.id === updated.id ? updated : s));
+      saveAllSetlists(next);
+      return next;
+    });
   };
 
   // Editar Foto do Artista e persistir no acervo e localStorage
@@ -794,11 +774,13 @@ ${song.chordpro}`;
   // Alternar arquivamento de Cifra
   const handleToggleArchiveSong = (song: Song) => {
     const updatedArchived = !song.arquivado;
+    const updatedSong = { ...song, arquivado: updatedArchived };
+    saveCustomSong(updatedSong);
     setSongs(prev =>
-      prev.map(s => (s.id === song.id ? { ...s, arquivado: updatedArchived } : s))
+      prev.map(s => (s.id === song.id ? updatedSong : s))
     );
     if (activeSong.id === song.id) {
-      setActiveSong(prev => ({ ...prev, arquivado: updatedArchived }));
+      setActiveSong(updatedSong);
     }
   };
 
@@ -809,7 +791,11 @@ ${song.chordpro}`;
     if (activeSetlist?.id === updated.id) {
       setActiveSetlist(updated);
     }
-    setSetlists(prev => prev.map(s => (s.id === updated.id ? updated : s)));
+    setSetlists(prev => {
+      const next = prev.map(s => (s.id === updated.id ? updated : s));
+      saveAllSetlists(next);
+      return next;
+    });
     setEditingSetlistPhoto(null);
   };
 
