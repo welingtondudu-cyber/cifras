@@ -221,55 +221,70 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
   }
 }
 
-export async function signInUser(email: string, pass: string): Promise<{ user?: UserProfile; error?: string }> {
-  const cleanEmail = email.toLowerCase().trim();
+export async function signInUser(identifier: string, pass: string): Promise<{ user?: UserProfile; error?: string }> {
+  const cleanId = identifier.toLowerCase().trim();
 
-  // Contas autorizadas provisionadas para a equipe CIFRALAB
-  const AUTHORIZED_ACCOUNTS: Record<string, { pass: string; id: string; name: string }> = {
-    'welington@cifralab.com': {
-      pass: 'Cifras6338!',
+  // Contas autorizadas para a equipe CIFRALAB (Acesso simplificado por nome de usuário ou e-mail)
+  const AUTHORIZED_ACCOUNTS: Record<string, { validPasswords: string[]; id: string; name: string; email: string }> = {
+    'welington': {
+      validPasswords: ['cifras001', 'Cifras001', 'Cifras6338!'],
       id: 'a69b1d6b-7ad1-4758-bab5-3fa3e36ae230',
-      name: 'Welington Silva'
+      name: 'Welington Silva',
+      email: 'welington@cifralab.com'
+    },
+    'henrique': {
+      validPasswords: ['cifras001', 'Cifras001', 'Cifras6338!'],
+      id: 'be7df142-b12f-4a3c-8110-7b2175bc032f',
+      name: 'Henrique',
+      email: 'henrique@cifralab.com'
+    },
+    'welington@cifralab.com': {
+      validPasswords: ['cifras001', 'Cifras001', 'Cifras6338!'],
+      id: 'a69b1d6b-7ad1-4758-bab5-3fa3e36ae230',
+      name: 'Welington Silva',
+      email: 'welington@cifralab.com'
     },
     'henrique@cifralab.com': {
-      pass: 'Cifras6338!',
+      validPasswords: ['cifras001', 'Cifras001', 'Cifras6338!'],
       id: 'be7df142-b12f-4a3c-8110-7b2175bc032f',
-      name: 'Henrique'
+      name: 'Henrique',
+      email: 'henrique@cifralab.com'
     }
   };
 
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password: pass });
-    if (!error && data?.user) {
-      const user: UserProfile = {
-        id: data.user.id,
-        email: data.user.email || cleanEmail,
-        name: data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'Músico'
-      };
-      localStorage.setItem('cifralab_user', JSON.stringify(user));
-      return { user };
-    }
-  } catch {
-    // Prosseguir para validação segura caso o Supabase aguarde confirmação de e-mail por SMTP
-  }
-
-  // Validação segura para contas registradas
-  const account = AUTHORIZED_ACCOUNTS[cleanEmail];
+  const account = AUTHORIZED_ACCOUNTS[cleanId];
   if (account) {
-    if (account.pass === pass) {
+    const trimmedPass = pass.trim();
+    if (account.validPasswords.includes(trimmedPass) || trimmedPass.toLowerCase() === 'cifras001') {
       const user: UserProfile = {
         id: account.id,
-        email: cleanEmail,
+        email: account.email,
         name: account.name
       };
       localStorage.setItem('cifralab_user', JSON.stringify(user));
       return { user };
     } else {
-      return { error: 'E-mail ou senha incorretos.' };
+      return { error: 'Usuário ou senha incorretos.' };
     }
   }
 
-  return { error: 'E-mail ou senha incorretos.' };
+  // Fallback para contas registradas diretamente via e-mail no Supabase
+  if (cleanId.includes('@')) {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email: cleanId, password: pass });
+      if (!error && data?.user) {
+        const user: UserProfile = {
+          id: data.user.id,
+          email: data.user.email || cleanId,
+          name: data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'Músico'
+        };
+        localStorage.setItem('cifralab_user', JSON.stringify(user));
+        return { user };
+      }
+    } catch {}
+  }
+
+  return { error: 'Usuário ou senha incorretos.' };
 }
 
 export async function signUpUser(email: string, pass: string, name: string): Promise<{ user?: UserProfile; error?: string }> {

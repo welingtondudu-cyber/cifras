@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import type { UserProfile } from '../types/music';
 import { signInUser } from '../lib/supabaseClient';
-import { Lock, Mail, ArrowRight, Music } from 'lucide-react';
+import { Lock, User, ArrowRight, Music } from 'lucide-react';
 
 interface LoginScreenProps {
   onLoginSuccess: (user: UserProfile) => void;
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -18,13 +18,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     setErrorMsg('');
     setLoading(true);
 
-    const res = await signInUser(email.trim(), password);
+    const res = await signInUser(username.trim(), password);
     setLoading(false);
 
     if (res.user) {
       onLoginSuccess(res.user);
     } else {
-      setErrorMsg(res.error || 'E-mail ou senha incorretos.');
+      setErrorMsg(res.error || 'Usuário ou senha incorretos.');
     }
   };
 
@@ -54,28 +54,37 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} noValidate className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-1.5">E-mail</label>
+            <label htmlFor="login-username" className="block text-xs font-semibold text-zinc-300 mb-1.5">Usuário</label>
             <div className="relative">
-              <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+              <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
               <input
-                type="email"
+                id="login-username"
+                name="username"
+                type="text"
+                autoComplete="username"
                 required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="seu-email@exemplo.com"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                placeholder="Digite seu usuário"
                 className="w-full bg-[#121212] border border-zinc-750 focus:border-orange-500 text-white text-xs rounded-xl pl-10 pr-4 py-3 outline-none transition-colors"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Senha</label>
+            <label htmlFor="login-password" className="block text-xs font-semibold text-zinc-300 mb-1.5">Senha</label>
             <div className="relative">
               <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
               <input
+                id="login-password"
+                name="password"
                 type="password"
+                autoComplete="current-password"
                 required
                 value={password}
                 onChange={e => setPassword(e.target.value)}
