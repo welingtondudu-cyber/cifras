@@ -2,14 +2,15 @@ import { useState, useEffect, useMemo } from 'react';
 import type {
   Song,
   Setlist,
+  SetlistItem,
   InstrumentType,
   ViewMode,
   ScreenView,
-  UserProfile
+  UserProfile,
+  AcademyModule
 } from './types/music';
 import {
   DEFAULT_SONGS,
-  DEFAULT_SETLISTS,
   fetchMusicas,
   fetchSetlists,
   createMusicaDb,
@@ -36,6 +37,7 @@ import { DegreeGrid } from './components/DegreeGrid';
 import { RightSidebarAI } from './components/RightSidebarAI';
 import { SetlistDetailView } from './components/SetlistDetailView';
 import { CreateSetlistModal } from './components/CreateSetlistModal';
+import { AddToSetlistModal } from './components/AddToSetlistModal';
 import { SongLibraryModal } from './components/SongLibraryModal';
 import { ChordDictionaryModal } from './components/ChordDictionaryModal';
 import { EditArtistModal } from './components/EditArtistModal';
@@ -44,6 +46,7 @@ import { MobileBottomNav } from './components/MobileBottomNav';
 import { SongFloatingToolbar } from './components/SongFloatingToolbar';
 import { SongOptionsSheet } from './components/SongOptionsSheet';
 import { TablatureEditorModal } from './components/TablatureEditorModal';
+import { AcademyView } from './components/academy/AcademyView';
 import {
   getSavedFavorites,
   saveFavorites,
@@ -105,7 +108,41 @@ export function App() {
     return cached.length > 0 ? cached : DEFAULT_SONGS;
   });
   const [setlists, setSetlists] = useState<Setlist[]>(() => {
-    return getSavedCustomSetlists();
+    const list = getSavedCustomSetlists();
+    const favIds = getSavedFavorites();
+    const hasFavSetlist = list.some(
+      s => s.id === 'set-favoritos' || s.nome.trim().toLowerCase() === 'favoritos'
+    );
+    if (!hasFavSetlist && favIds.length > 0) {
+      const allCachedSongs = getSavedCustomSongs();
+      const allSongs = allCachedSongs.length > 0 ? allCachedSongs : DEFAULT_SONGS;
+      const favSongs = favIds
+        .map(id => allSongs.find(s => s.id === id))
+        .filter((s): s is Song => Boolean(s));
+
+      if (favSongs.length > 0) {
+        const favSetlist: Setlist = {
+          id: 'set-favoritos',
+          nome: 'Favoritos',
+          descricao: 'Músicas marcadas como favoritas',
+          owner_name: 'Welington_sc',
+          publico: false,
+          cover_gradient: 'from-amber-500 to-orange-600',
+          itens: favSongs.map((s, idx) => ({
+            id: 'item-fav-' + s.id,
+            setlist_id: 'set-favoritos',
+            musica_id: s.id,
+            ordem: idx + 1,
+            musica: s
+          })),
+          created_at: new Date().toISOString()
+        };
+        const merged = [favSetlist, ...list];
+        saveAllSetlists(merged);
+        return merged;
+      }
+    }
+    return list;
   });
 
   // Música e repertório ativos
@@ -120,13 +157,12 @@ export function App() {
   });
 
   const [activeSetlist, setActiveSetlist] = useState<Setlist | null>(() => {
-    const cachedSetlists = getSavedCustomSetlists().filter(s => s.id !== 'set-1' && s.nome.trim().toLowerCase() !== 'recentes');
+    const cachedSetlists = getSavedCustomSetlists();
     if (savedNav?.activeSetlistId) {
       const found = cachedSetlists.find(s => s.id === savedNav.activeSetlistId);
       if (found) return found;
     }
-    const defaultClean = DEFAULT_SETLISTS.filter(s => s.id !== 'set-1' && s.nome.trim().toLowerCase() !== 'recentes');
-    return cachedSetlists[0] || defaultClean[0] || null;
+    return cachedSetlists[0] || null;
   });
 
   const [songIndexInSetlist, setSongIndexInSetlist] = useState<number>(() => {
@@ -159,7 +195,30 @@ export function App() {
     );
   };
 
+  // Contexto da aula de estudos ativa para a IA
+  const [activeStudyLesson, setActiveStudyLesson] = useState<{
+    levelTitle: string;
+    levelNumber: number;
+    module: AcademyModule;
+  } | null>(null);
+
+  const handleAskAIAcademy = (
+    prompt?: string,
+    lessonContext?: { levelTitle: string; levelNumber: number; module: AcademyModule }
+  ) => {
+    if (lessonContext) {
+      setActiveStudyLesson(lessonContext);
+    }
+    if (prompt && prompt.trim().length > 0) {
+      setPendingAIPrompt(prompt);
+    } else {
+      setPendingAIPrompt(null);
+    }
+    setIsAIPanelOpen(true);
+  };
+
   // Modais e Estados Auxiliares
+  const [isAddToSetlistOpen, setIsAddToSetlistOpen] = useState<boolean>(false);
   const [isCreateSetlistOpen, setIsCreateSetlistOpen] = useState<boolean>(false);
   const [isCreateSongOpen, setIsCreateSongOpen] = useState<boolean>(false);
   const [editingSong, setEditingSong] = useState<Song | null>(null);
@@ -467,46 +526,123 @@ export function App() {
     await updateSetlistItemsOrderDb(reorderedItemIds);
   };
 
-  // Adicionar música ao repertório ativo (com persistência garantida)
-  const handleAddSongToActiveSetlist = async (songId: string) => {
-    if (!activeSetlist) return;
-    const song = songs.find(s => s.id === songId);
-    if (!song) return;
+  // Adicionar uma música a qualquer repertório (direto da cifra ou listagem)
+  const handleAddSongToSetlist = async (songId: string, setlistId: string) => {
+    const targetSetlist = setlists.find(s => s.id === setlistId);
+    const targetSong = songs.find(s => s.id === songId);
+    if (!targetSetlist || !targetSong) return;
 
-    if (song.arquivado) {
+    if (targetSong.arquivado) {
       alert('Esta cifra está arquivada e não pode ser adicionada.');
       return;
     }
 
-    const currentItens = activeSetlist.itens || [];
+    const currentItens = targetSetlist.itens || [];
     const alreadyIn = currentItens.some(i => i.musica_id === songId || i.musica?.id === songId);
-    if (alreadyIn) {
-      alert('Esta música já está incluída neste repertório.');
-      return;
-    }
+    if (alreadyIn) return;
 
     const nextOrder = currentItens.length + 1;
-    // Persistir no Supabase ou gerar ID resiliente
-    const dbItem = await addSongToSetlistDb(activeSetlist.id, song.id, nextOrder);
+    const dbItem = await addSongToSetlistDb(targetSetlist.id, targetSong.id, nextOrder);
 
     const newItem = {
       id: dbItem?.id || ('item-' + Date.now()),
-      setlist_id: activeSetlist.id,
-      musica_id: song.id,
+      setlist_id: targetSetlist.id,
+      musica_id: targetSong.id,
       ordem: nextOrder,
-      musica: song
+      musica: targetSong
     };
 
-    const updatedSetlist = {
-      ...activeSetlist,
+    const updatedSetlist: Setlist = {
+      ...targetSetlist,
       itens: [...currentItens, newItem]
     };
-    setActiveSetlist(updatedSetlist);
+
     setSetlists(prev => {
       const next = prev.map(s => (s.id === updatedSetlist.id ? updatedSetlist : s));
       saveAllSetlists(next);
       return next;
     });
+
+    if (activeSetlist && activeSetlist.id === targetSetlist.id) {
+      setActiveSetlist(updatedSetlist);
+    }
+
+    if (setlistId === 'set-favoritos' || targetSetlist.nome.trim().toLowerCase() === 'favoritos') {
+      setFavoriteSongIds(prev => {
+        const next = new Set(prev);
+        next.add(songId);
+        saveFavorites(Array.from(next));
+        return next;
+      });
+    }
+  };
+
+  // Remover música de um repertório (direto da cifra ou modal)
+  const handleRemoveSongFromSetlist = async (songId: string, setlistId: string) => {
+    const targetSetlist = setlists.find(s => s.id === setlistId);
+    if (!targetSetlist) return;
+
+    const itemToRemove = (targetSetlist.itens || []).find(
+      i => i.musica_id === songId || i.musica?.id === songId
+    );
+    if (!itemToRemove) return;
+
+    const updatedItens = (targetSetlist.itens || []).filter(i => i.id !== itemToRemove.id);
+    const updatedSetlist: Setlist = {
+      ...targetSetlist,
+      itens: updatedItens
+    };
+
+    setSetlists(prev => {
+      const next = prev.map(s => (s.id === updatedSetlist.id ? updatedSetlist : s));
+      saveAllSetlists(next);
+      return next;
+    });
+
+    if (activeSetlist && activeSetlist.id === targetSetlist.id) {
+      setActiveSetlist(updatedSetlist);
+    }
+
+    if (setlistId === 'set-favoritos' || targetSetlist.nome.trim().toLowerCase() === 'favoritos') {
+      setFavoriteSongIds(prev => {
+        const next = new Set(prev);
+        next.delete(songId);
+        saveFavorites(Array.from(next));
+        return next;
+      });
+    }
+
+    await removeSongFromSetlistDb(itemToRemove.id);
+  };
+
+  // Criar repertório com uma música inicial (sem sair da tela da cifra)
+  const handleCreateSetlistWithSong = async (
+    name: string,
+    description: string,
+    isPublic: boolean,
+    songId: string
+  ): Promise<Setlist> => {
+    const created = await createSetlistDb({
+      nome: name,
+      descricao: description,
+      publico: isPublic,
+      songIds: [songId],
+      allAvailableSongs: songs
+    });
+
+    setSetlists(prev => {
+      const next = [created, ...prev.filter(s => s.id !== created.id)];
+      saveAllSetlists(next);
+      return next;
+    });
+
+    return created;
+  };
+
+  // Adicionar música ao repertório ativo (compatibilidade com tela de detalhes)
+  const handleAddSongToActiveSetlist = async (songId: string) => {
+    if (!activeSetlist) return;
+    await handleAddSongToSetlist(songId, activeSetlist.id);
   };
 
   // Salvar tom transposto atual no texto ChordPro e tom original da cifra
@@ -645,63 +781,94 @@ export function App() {
     setEditingSong(null);
   };
 
-  // Favoritar / Desfavoritar Cifra com Sincronização ao Repertório "⭐ Favoritos"
+  // Favoritar / Desfavoritar Cifra com Sincronização Direta ao Repertório "Favoritos"
   const handleToggleFavorite = (song: Song) => {
-    setFavoriteSongIds(prev => {
-      const next = new Set(prev);
-      const isFav = next.has(song.id);
-      if (isFav) {
-        next.delete(song.id);
-      } else {
-        next.add(song.id);
-      }
+    const isCurrentlyFav = favoriteSongIds.has(song.id);
+    const nextFavs = new Set(favoriteSongIds);
+    if (isCurrentlyFav) {
+      nextFavs.delete(song.id);
+    } else {
+      nextFavs.add(song.id);
+    }
+    setFavoriteSongIds(nextFavs);
+    saveFavorites(Array.from(nextFavs));
 
-      saveFavorites(Array.from(next));
+    // Sincronizar diretamente com o repertório "Favoritos"
+    setSetlists(prev => {
+      const favIndex = prev.findIndex(
+        s => s.id === 'set-favoritos' || s.nome.trim().toLowerCase() === 'favoritos'
+      );
 
-      // Sincronizar com setlist de Favoritos
-      setSetlists(currentSetlists => {
-        const favIndex = currentSetlists.findIndex(s => s.id === 'set-favoritos');
-        if (isFav) {
-          // Remover do repertório de favoritos
-          if (favIndex !== -1) {
-            const updated = {
-              ...currentSetlists[favIndex],
-              itens: currentSetlists[favIndex].itens.filter(it => it.musica_id !== song.id)
-            };
-            return currentSetlists.map((s, idx) => (idx === favIndex ? updated : s));
-          }
-          return currentSetlists;
-        } else {
-          // Adicionar ao repertório de favoritos
-          const newItem = {
-            id: 'item-fav-' + song.id,
-            setlist_id: 'set-favoritos',
-            musica_id: song.id,
-            ordem: 1,
-            musica: song
+      if (isCurrentlyFav) {
+        // Remover a música de Favoritos
+        if (favIndex !== -1) {
+          const currentFav = prev[favIndex];
+          const updatedItens = (currentFav.itens || []).filter(
+            it => it.musica_id !== song.id && it.musica?.id !== song.id
+          );
+          const updatedFav: Setlist = {
+            ...currentFav,
+            itens: updatedItens
           };
-          if (favIndex !== -1) {
-            const updated = {
-              ...currentSetlists[favIndex],
-              itens: [newItem, ...currentSetlists[favIndex].itens.filter(it => it.musica_id !== song.id)]
-            };
-            return currentSetlists.map((s, idx) => (idx === favIndex ? updated : s));
-          } else {
-            const newFavSetlist: Setlist = {
-              id: 'set-favoritos',
-              nome: '⭐ Favoritos',
-              descricao: 'Músicas marcadas como favoritas no CIFRALAB',
-              owner_name: user?.name || 'Welington_sc',
-              publico: false,
-              cover_gradient: 'from-amber-600 to-orange-700',
-              itens: [newItem]
-            };
-            return [newFavSetlist, ...currentSetlists];
+          const nextSetlists = prev.map((s, idx) => (idx === favIndex ? updatedFav : s));
+          saveAllSetlists(nextSetlists);
+          if (
+            activeSetlist &&
+            (activeSetlist.id === updatedFav.id || activeSetlist.nome.trim().toLowerCase() === 'favoritos')
+          ) {
+            setActiveSetlist(updatedFav);
           }
+          return nextSetlists;
         }
-      });
+        return prev;
+      } else {
+        // Adicionar a música diretamente ao repertório Favoritos
+        const newItem: SetlistItem = {
+          id: 'item-fav-' + song.id,
+          setlist_id: 'set-favoritos',
+          musica_id: song.id,
+          ordem: favIndex !== -1 ? (prev[favIndex].itens || []).length + 1 : 1,
+          musica: song
+        };
 
-      return next;
+        if (favIndex !== -1) {
+          const currentFav = prev[favIndex];
+          const existingItens = currentFav.itens || [];
+          const alreadyIn = existingItens.some(
+            it => it.musica_id === song.id || it.musica?.id === song.id
+          );
+          if (alreadyIn) return prev;
+
+          const updatedFav: Setlist = {
+            ...currentFav,
+            itens: [...existingItens, newItem]
+          };
+          const nextSetlists = prev.map((s, idx) => (idx === favIndex ? updatedFav : s));
+          saveAllSetlists(nextSetlists);
+          if (
+            activeSetlist &&
+            (activeSetlist.id === updatedFav.id || activeSetlist.nome.trim().toLowerCase() === 'favoritos')
+          ) {
+            setActiveSetlist(updatedFav);
+          }
+          return nextSetlists;
+        } else {
+          // Criar o repertório Favoritos com a música adicionada
+          const newFavSetlist: Setlist = {
+            id: 'set-favoritos',
+            nome: 'Favoritos',
+            descricao: 'Músicas marcadas como favoritas',
+            owner_name: user?.name || 'Welington_sc',
+            publico: false,
+            cover_gradient: 'from-amber-500 to-orange-600',
+            itens: [newItem],
+            created_at: new Date().toISOString()
+          };
+          const nextSetlists = [newFavSetlist, ...prev];
+          saveAllSetlists(nextSetlists);
+          return nextSetlists;
+        }
+      }
     });
   };
 
@@ -820,19 +987,21 @@ ${song.chordpro}`;
   }
 
   return (
-    <div className="min-h-screen bg-[#121212] text-zinc-100 flex flex-col antialiased selection:bg-orange-500/30 selection:text-orange-300">
+    <div className="h-screen w-screen overflow-hidden bg-[#121212] text-zinc-100 flex flex-col antialiased selection:bg-orange-500/30 selection:text-orange-300">
       {/* Header Global Adaptativo (Presente em todas as telas) */}
-      <GlobalHeader
-        user={user}
-        onToggleAIPanel={() => setIsAIPanelOpen(prev => !prev)}
-        onLogout={handleLogout}
-        onGoHome={() => setScreenView('home')}
-      />
+      <div className="shrink-0 z-30">
+        <GlobalHeader
+          user={user}
+          onToggleAIPanel={() => setIsAIPanelOpen(prev => !prev)}
+          onLogout={handleLogout}
+          onGoHome={() => setScreenView('home')}
+        />
+      </div>
 
-      {/* Container Principal com Suporte ao Chat Lateral Estilo IDE Antigravity */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Lado Esquerdo / Conteúdo Central */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto min-h-[calc(100vh-57px)] pb-14 lg:pb-0">
+      {/* Container Principal com Suporte ao Chat Lateral Estilo IDE Antigravity (Fixo no Lado Direito) */}
+      <div className="flex-1 flex overflow-hidden relative min-h-0">
+        {/* Conteúdo Central com Rolagem Independente */}
+        <main className="flex-1 flex flex-col min-w-0 overflow-y-auto h-full pb-20 lg:pb-0 overscroll-contain">
 
           {/* TELA 1: HOME HUB (Repertórios com busca, Estilos e Artistas Principais) */}
           {screenView === 'home' && (
@@ -923,7 +1092,7 @@ ${song.chordpro}`;
                 <div className="flex items-center gap-2.5">
                   <button
                     onClick={() => setIsCreateSetlistOpen(true)}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-750 text-xs sm:text-sm font-bold text-zinc-200 transition-colors border border-zinc-700 active:scale-95 shadow-sm"
+                    className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-750 text-xs sm:text-sm font-bold text-zinc-200 transition-colors border border-zinc-700 active:scale-95 shadow-sm"
                   >
                     <Plus size={15} className="text-orange-400" />
                     <span>Novo Repertório</span>
@@ -934,7 +1103,7 @@ ${song.chordpro}`;
                       setEditingSong(null);
                       setIsCreateSongOpen(true);
                     }}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-xs sm:text-sm font-bold text-white transition-colors active:scale-95 shadow-lg shadow-orange-500/20"
+                    className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-xs sm:text-sm font-bold text-white transition-colors active:scale-95 shadow-lg shadow-orange-500/20"
                   >
                     <Plus size={15} />
                     <span>Nova Cifra</span>
@@ -1036,9 +1205,19 @@ ${song.chordpro}`;
               />
             </div>
           )}
-        </div>
 
-        {/* Painel Lateral de Chat IA Acoplado à Direita (Estilo IDE Antigravity) */}
+          {/* TELA 5: CIFRALAB ACADEMIA (Trilhas de Teoria Musical & Estudos) */}
+          {screenView === 'academy' && (
+            <AcademyView
+              user={user}
+              onBack={() => setScreenView('home')}
+              onAskAI={handleAskAIAcademy}
+              onSelectActiveLesson={setActiveStudyLesson}
+            />
+          )}
+        </main>
+
+        {/* Painel Lateral de Chat IA Fixo no Lado Direito (Estilo Antigravity IDE) */}
         <RightSidebarAI
           isOpen={isAIPanelOpen}
           onToggle={() => setIsAIPanelOpen(prev => !prev)}
@@ -1053,6 +1232,7 @@ ${song.chordpro}`;
           promptToExecute={pendingAIPrompt}
           onPromptExecuted={() => setPendingAIPrompt(null)}
           userId={user?.id}
+          studyLesson={activeStudyLesson}
         />
       </div>
 
@@ -1125,6 +1305,7 @@ ${song.chordpro}`;
         onSetAutoAdvanceEnabled={setAutoAdvanceEnabled}
         isInSetlist={Boolean(activeSetlist && activeSetlist.itens.length > 1)}
         onSaveCurrentKeyAsDefault={handleSaveCurrentKeyAsDefault}
+        onOpenAddToSetlist={() => setIsAddToSetlistOpen(true)}
       />
 
       {/* Modal Editor de Tablaturas ("TabLab") */}
@@ -1136,6 +1317,16 @@ ${song.chordpro}`;
       />
 
       {/* Modais */}
+      <AddToSetlistModal
+        isOpen={isAddToSetlistOpen}
+        onClose={() => setIsAddToSetlistOpen(false)}
+        song={activeSong}
+        setlists={setlists}
+        onAddSongToSetlist={handleAddSongToSetlist}
+        onRemoveSongFromSetlist={handleRemoveSongFromSetlist}
+        onCreateSetlistWithSong={handleCreateSetlistWithSong}
+      />
+
       <CreateSetlistModal
         isOpen={isCreateSetlistOpen}
         onClose={() => setIsCreateSetlistOpen(false)}

@@ -1,5 +1,5 @@
 import type { Song, Setlist } from '../types/music';
-import { DEFAULT_SONGS, DEFAULT_SETLISTS } from './supabaseClient';
+import { DEFAULT_SONGS } from './supabaseClient';
 
 const STORAGE_KEYS = {
   FAVORITES: 'cifralab_favorites',
@@ -7,6 +7,7 @@ const STORAGE_KEYS = {
   CUSTOM_SETLISTS: 'cifralab_setlists_custom',
   TRANSITIONS: 'cifralab_transitions',
   SETTINGS: 'cifralab_user_settings',
+  ACADEMY_PROGRESS: 'cifralab_academy_progress',
 };
 
 // 1. Favoritos
@@ -56,19 +57,36 @@ export function saveCustomSong(song: Song): Song[] {
   }
 }
 
+export function isRestrictedSetlist(s: { id?: string; nome?: string }): boolean {
+  if (!s) return true;
+  const id = s.id || '';
+  const nome = (s.nome || '').trim().toLowerCase();
+  return (
+    id === 'set-1' ||
+    id === 'set-2' ||
+    id === 'set-3' ||
+    nome === 'recentes' ||
+    nome === 'projeto som'
+  );
+}
+
 export function getSavedCustomSetlists(): Setlist[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.CUSTOM_SETLISTS);
-    const list: Setlist[] = raw ? JSON.parse(raw) : DEFAULT_SETLISTS;
-    return list.filter(s => s.id !== 'set-1' && s.nome.toLowerCase() !== 'recentes');
+    const list: Setlist[] = raw ? JSON.parse(raw) : [];
+    const clean = list.filter(s => !isRestrictedSetlist(s));
+    if (raw && list.length !== clean.length) {
+      localStorage.setItem(STORAGE_KEYS.CUSTOM_SETLISTS, JSON.stringify(clean));
+    }
+    return clean;
   } catch {
-    return DEFAULT_SETLISTS;
+    return [];
   }
 }
 
 export function saveAllSetlists(setlists: Setlist[]): void {
   try {
-    const clean = setlists.filter(s => s.id !== 'set-1' && s.nome.trim().toLowerCase() !== 'recentes');
+    const clean = setlists.filter(s => !isRestrictedSetlist(s));
     localStorage.setItem(STORAGE_KEYS.CUSTOM_SETLISTS, JSON.stringify(clean));
   } catch (err) {
     console.error('Erro ao salvar repertórios em cache:', err);
@@ -108,16 +126,16 @@ export function mergeSongsWithLocal(dbSongs: Song[], localSongs: Song[]): Song[]
 export function mergeSetlistsWithLocal(dbSetlists: Setlist[], localSetlists: Setlist[]): Setlist[] {
   const map = new Map<string, Setlist>();
 
-  // 1. Inicia com os repertórios do Supabase (filtrando 'recentes' / 'set-1')
+  // 1. Inicia com os repertórios do Supabase (filtrando restritos)
   for (const dbSet of dbSetlists) {
-    if (dbSet && dbSet.id && dbSet.id !== 'set-1' && dbSet.nome.trim().toLowerCase() !== 'recentes') {
+    if (dbSet && dbSet.id && !isRestrictedSetlist(dbSet)) {
       map.set(dbSet.id, { ...dbSet, itens: dbSet.itens || [] });
     }
   }
 
   // 2. Mescla com os repertórios locais do usuário
   for (const localSet of localSetlists) {
-    if (!localSet || !localSet.id || localSet.id === 'set-1' || localSet.nome.trim().toLowerCase() === 'recentes') {
+    if (!localSet || !localSet.id || isRestrictedSetlist(localSet)) {
       continue;
     }
 
@@ -154,8 +172,7 @@ export function mergeSetlistsWithLocal(dbSetlists: Setlist[], localSetlists: Set
     }
   }
 
-  const result = Array.from(map.values());
-  return result.length > 0 ? result : (dbSetlists.length > 0 ? dbSetlists : DEFAULT_SETLISTS);
+  return Array.from(map.values());
 }
 
 
@@ -203,3 +220,32 @@ export function getTransitionForSongs(
   const key = `${setlistId}_${fromSongId}_${toSongId}`;
   return all[key] || null;
 }
+
+// 6. CIFRALAB Academy - Progresso dos Módulos/Lições
+export function getSavedAcademyProgress(): Record<number, boolean> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.ACADEMY_PROGRESS);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function saveAcademyProgress(progress: Record<number, boolean>): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.ACADEMY_PROGRESS, JSON.stringify(progress));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('cifralab_academy_progress_updated', { detail: progress }));
+    }
+  } catch (err) {
+    console.error('Erro ao salvar progresso da Academy:', err);
+  }
+}
+
+export function setModuleCompletion(moduleId: number, completed: boolean): Record<number, boolean> {
+  const current = getSavedAcademyProgress();
+  const updated = { ...current, [moduleId]: completed };
+  saveAcademyProgress(updated);
+  return updated;
+}
+

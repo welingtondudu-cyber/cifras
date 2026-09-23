@@ -179,33 +179,7 @@ Eu can[G]tarei da bon[D]dade de [G]Deus`
   }
 ];
 
-export const DEFAULT_SETLISTS: Setlist[] = [
-  {
-    id: 'set-2',
-    nome: 'Favoritas',
-    descricao: 'Clássicos que não podem faltar no show',
-    owner_name: 'Welington_sc',
-    publico: false,
-    cover_gradient: 'from-amber-500 to-orange-700',
-    itens: [
-      { id: 'item-4', setlist_id: 'set-2', musica_id: 's-2', ordem: 1, musica: DEFAULT_SONGS[1] },
-      { id: 'item-5', setlist_id: 'set-2', musica_id: 's-5', ordem: 2, musica: DEFAULT_SONGS[4] },
-      { id: 'item-6', setlist_id: 'set-2', musica_id: 's-4', ordem: 3, musica: DEFAULT_SONGS[3] }
-    ]
-  },
-  {
-    id: 'set-3',
-    nome: 'Projeto Som',
-    descricao: 'Arranjos ao vivo para Cavaco e Violão',
-    owner_name: 'Welington_sc',
-    publico: true,
-    cover_gradient: 'from-rose-600 to-orange-600',
-    itens: [
-      { id: 'item-7', setlist_id: 'set-3', musica_id: 's-1', ordem: 1, musica: DEFAULT_SONGS[0] },
-      { id: 'item-8', setlist_id: 'set-3', musica_id: 's-3', ordem: 2, musica: DEFAULT_SONGS[2] }
-    ]
-  }
-];
+export const DEFAULT_SETLISTS: Setlist[] = [];
 
 // Métodos de Autenticação Supabase (Acesso restrito com persistência de sessão)
 export async function getCurrentUser(): Promise<UserProfile | null> {
@@ -643,5 +617,52 @@ export async function saveUserAiSessionDb(userId: string, session: any): Promise
     return false;
   }
 }
+
+// 7. CIFRALAB Academy - Progresso do Usuário no Supabase
+export async function fetchUserAcademyProgress(userId: string): Promise<Record<number, boolean>> {
+  if (!userId) return {};
+  try {
+    const { data, error } = await supabase
+      .from('user_module_progress')
+      .select('module_id, completed')
+      .eq('user_id', userId);
+
+    if (error || !data) return {};
+    const map: Record<number, boolean> = {};
+    data.forEach((row: any) => {
+      map[row.module_id] = Boolean(row.completed);
+    });
+    return map;
+  } catch (err) {
+    console.warn('Erro ao carregar progresso da Academy no Supabase:', err);
+    return {};
+  }
+}
+
+export async function updateUserAcademyModuleProgress(
+  userId: string,
+  moduleId: number,
+  completed: boolean
+): Promise<boolean> {
+  if (!userId) return false;
+  try {
+    const { error } = await supabase
+      .from('user_module_progress')
+      .upsert(
+        {
+          user_id: userId,
+          module_id: moduleId,
+          completed,
+          updated_at: new Date().toISOString()
+        },
+        { onConflict: 'user_id,module_id' }
+      );
+    return !error;
+  } catch (err) {
+    console.warn('Erro ao atualizar progresso da Academy no Supabase:', err);
+    return false;
+  }
+}
+
 
 

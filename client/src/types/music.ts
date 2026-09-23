@@ -2,7 +2,35 @@ export type InstrumentType = 'cavaco' | 'violao';
 
 export type ViewMode = 'chordpro' | 'leadSheet' | 'degrees';
 
-export type ScreenView = 'home' | 'songs_list' | 'setlist' | 'stage';
+export type ScreenView = 'home' | 'songs_list' | 'setlist' | 'stage' | 'academy';
+
+export interface AcademyModule {
+  id: number;
+  number: number;
+  title: string;
+  concept: string;
+  practical_example: string;
+  exercise: string;
+  time_estimate?: string;
+  key_chords?: string[];
+}
+
+export interface AcademyLevel {
+  level: number;
+  title: string;
+  description: string;
+  levelBadge: 'Iniciante' | 'Intermediário' | 'Avançado' | 'Mestre' | string;
+  badgeColor?: string;
+  modules: AcademyModule[];
+}
+
+export interface UserModuleProgress {
+  id?: number;
+  user_id?: string;
+  module_id: number;
+  completed: boolean;
+  updated_at?: string;
+}
 
 export interface Song {
   id: string;

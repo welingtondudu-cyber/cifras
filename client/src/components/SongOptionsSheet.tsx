@@ -23,7 +23,9 @@ import {
   StickyNote,
   Repeat,
   FastForward,
-  Save
+  Save,
+  ListPlus,
+  FolderPlus
 } from 'lucide-react';
 
 interface SongOptionsSheetProps {
@@ -64,6 +66,7 @@ interface SongOptionsSheetProps {
   onSetAutoAdvanceEnabled?: (enabled: boolean) => void;
   isInSetlist?: boolean;
   onSaveCurrentKeyAsDefault?: () => void;
+  onOpenAddToSetlist?: () => void;
 }
 
 export const SongOptionsSheet: React.FC<SongOptionsSheetProps> = ({
@@ -104,6 +107,7 @@ export const SongOptionsSheet: React.FC<SongOptionsSheetProps> = ({
   onSetAutoAdvanceEnabled,
   isInSetlist = false,
   onSaveCurrentKeyAsDefault,
+  onOpenAddToSetlist,
 }) => {
   const [copiedLink, setCopiedLink] = React.useState(false);
 
@@ -146,36 +150,53 @@ export const SongOptionsSheet: React.FC<SongOptionsSheetProps> = ({
 
         {/* Corpo com rolagem suave */}
         <div className="overflow-y-auto px-6 py-4 space-y-5 select-none">
-          {/* 1. 4 Botões Circulares de Ação Rápida (Print 4) */}
-          <div className="grid grid-cols-4 gap-3 text-center">
-            {/* Salvar */}
+          {/* 1. Botões Circulares de Ação Rápida */}
+          <div className={`grid ${onOpenAddToSetlist ? 'grid-cols-5' : 'grid-cols-4'} gap-2 text-center`}>
+            {/* Favorito */}
             <button
               onClick={onToggleFavorite}
               className="flex flex-col items-center gap-1.5 group active:scale-95 transition-transform"
+              title={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
             >
               <div
-                className={`w-13 h-13 rounded-full flex items-center justify-center p-3.5 transition-colors ${
+                className={`w-12 h-12 sm:w-13 sm:h-13 rounded-full flex items-center justify-center p-3 transition-colors ${
                   isFavorite
                     ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
                     : 'bg-zinc-800 text-zinc-300 group-hover:bg-zinc-700'
                 }`}
               >
-                <Bookmark size={20} fill={isFavorite ? 'currentColor' : 'none'} />
+                <Bookmark size={19} fill={isFavorite ? 'currentColor' : 'none'} />
               </div>
-              <span className="text-xs text-zinc-300 font-medium">
-                {isFavorite ? 'Salvo' : 'Salvar'}
+              <span className="text-[11px] sm:text-xs text-zinc-300 font-medium">
+                Favorito
               </span>
             </button>
+
+            {/* Repertório */}
+            {onOpenAddToSetlist && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenAddToSetlist();
+                }}
+                className="flex flex-col items-center gap-1.5 group active:scale-95 transition-transform"
+              >
+                <div className="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-zinc-800 group-hover:bg-orange-500/20 text-zinc-300 group-hover:text-orange-400 border border-transparent group-hover:border-orange-500/30 flex items-center justify-center p-3 transition-colors">
+                  <FolderPlus size={19} />
+                </div>
+                <span className="text-[11px] sm:text-xs text-zinc-300 font-medium">Repertório</span>
+              </button>
+            )}
 
             {/* Compartilhar */}
             <button
               onClick={handleShare}
               className="flex flex-col items-center gap-1.5 group active:scale-95 transition-transform"
             >
-              <div className="w-13 h-13 rounded-full bg-zinc-800 group-hover:bg-zinc-700 text-zinc-300 flex items-center justify-center p-3.5 transition-colors">
-                <Share2 size={20} />
+              <div className="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-zinc-800 group-hover:bg-zinc-700 text-zinc-300 flex items-center justify-center p-3 transition-colors">
+                <Share2 size={19} />
               </div>
-              <span className="text-xs text-zinc-300 font-medium">
+              <span className="text-[11px] sm:text-xs text-zinc-300 font-medium">
                 {copiedLink ? 'Copiado!' : 'Compartilhar'}
               </span>
             </button>
@@ -185,10 +206,10 @@ export const SongOptionsSheet: React.FC<SongOptionsSheetProps> = ({
               onClick={handlePrint}
               className="flex flex-col items-center gap-1.5 group active:scale-95 transition-transform"
             >
-              <div className="w-13 h-13 rounded-full bg-zinc-800 group-hover:bg-zinc-700 text-zinc-300 flex items-center justify-center p-3.5 transition-colors">
-                <Printer size={20} />
+              <div className="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-zinc-800 group-hover:bg-zinc-700 text-zinc-300 flex items-center justify-center p-3 transition-colors">
+                <Printer size={19} />
               </div>
-              <span className="text-xs text-zinc-300 font-medium">Imprimir</span>
+              <span className="text-[11px] sm:text-xs text-zinc-300 font-medium">Imprimir</span>
             </button>
 
             {/* Editar */}
@@ -199,12 +220,38 @@ export const SongOptionsSheet: React.FC<SongOptionsSheetProps> = ({
               }}
               className="flex flex-col items-center gap-1.5 group active:scale-95 transition-transform"
             >
-              <div className="w-13 h-13 rounded-full bg-zinc-800 group-hover:bg-zinc-700 text-zinc-300 flex items-center justify-center p-3.5 transition-colors">
-                <Edit3 size={20} />
+              <div className="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-zinc-800 group-hover:bg-zinc-700 text-zinc-300 flex items-center justify-center p-3 transition-colors">
+                <Edit3 size={19} />
               </div>
-              <span className="text-xs text-zinc-300 font-medium">Editar</span>
+              <span className="text-[11px] sm:text-xs text-zinc-300 font-medium">Editar</span>
             </button>
           </div>
+
+          {/* Card Destacado: Adicionar a Repertório */}
+          {onOpenAddToSetlist && (
+            <div
+              onClick={() => {
+                onClose();
+                onOpenAddToSetlist();
+              }}
+              className="bg-zinc-850/80 hover:bg-zinc-800/90 border border-zinc-800 hover:border-orange-500/40 rounded-2xl p-3 flex items-center justify-between cursor-pointer transition-all group shadow-sm active:scale-[0.99]"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center border border-orange-500/30">
+                  <ListPlus size={20} />
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-white group-hover:text-orange-400 transition-colors">
+                    Adicionar ao Repertório
+                  </h4>
+                  <p className="text-xs text-zinc-400">
+                    Incluir esta cifra em um ou mais repertórios de palco
+                  </p>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-zinc-500 group-hover:text-orange-400 transition-colors" />
+            </div>
+          )}
 
           {/* 2. Card de Videoaula / YouTube */}
           <div className="bg-zinc-850/80 border border-zinc-800 rounded-2xl p-3 flex items-center justify-between hover:bg-zinc-800/80 transition-colors">

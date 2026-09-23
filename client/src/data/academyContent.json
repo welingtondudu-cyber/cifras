@@ -1,0 +1,258 @@
+{
+  "levels": [
+    {
+      "level": 1,
+      "title": "Fundamentos & O Início Prático",
+      "description": "Sair do zero absoluto, dominar cifras, ritmo e montagem de acordes.",
+      "levelBadge": "Iniciante",
+      "badgeColor": "emerald",
+      "modules": [
+        {
+          "id": 101,
+          "number": 1,
+          "title": "O Alfabeto Musical e as Cifras Internacionais",
+          "concept": "A música possui sua própria linguagem escrita, e o sistema de cifras internacional é o padrão universal adotado por músicos em todo o mundo. Em vez de escrever nomes longos de notas em partituras tradicionais, usamos letras de A a G para representar as sete notas naturais fundamentais. Cada letra equivale a uma nota específica: A é Lá, B é Si, C é Dó, D é Ré, E é Mi, F é Fá e G é Sol. Quando essas letras vêm sozinhas, representam o acorde maior básico. No entanto, os símbolos ao lado das letras mudam completamente a cor do acorde. A letra 'm' minúscula indica que o acorde é menor, traz uma sonoridade melancólica. Números como o '7' indicam a adição de uma sétima, criando tensão que puxa o som para frente.",
+          "practical_example": "Imagine que você abriu uma música no CIFRALAB e encontrou o símbolo Am7 na primeira linha. Seu cérebro faz a tradução instantânea: a letra 'A' significa Lá; a letra 'm' avisa que a tríade é menor; e o '7' acrescenta a sétima menor (Sol). O resultado montado no instrumento é o acorde completo de Lá Menor com Sétima (Lá, Dó, Mi, Sol).",
+          "exercise": "Abra o seu acervo pessoal de cifras no CIFRALAB, selecione três músicas diferentes e leia em voz alta o nome por extenso de cada símbolo cifrado que aparece na introdução.",
+          "time_estimate": "10 min",
+          "key_chords": ["C", "Am", "Dm", "G7", "Am7"]
+        },
+        {
+          "id": 102,
+          "number": 2,
+          "title": "Montagem Lógica de Acordes (A Fábrica de Acordes)",
+          "concept": "Acorde não é decoreba de desenho no braço do instrumento; é matemática e física acústica. Um acorde maior obedece a uma fórmula lógica baseada na distância entre notas (semitons). Toda tríade maior é construída a partir de sua nota fundamental (a tônica), somada a uma terça maior (4 semitons acima) e a uma quinta justa (3 semitons acima da terça). Entender essa fórmula permite fabricar qualquer acorde do zero.",
+          "practical_example": "Para construir o acorde de Dó Maior (C) do zero, começamos na nota C. Subimos 4 semitons e encontramos o E (Mi). A partir do E, subimos mais 3 semitons e encontramos o G (Sol). Juntando as três, formamos C + E + G (Dó Maior). Você criou o acorde entendendo a lógica estrutural.",
+          "exercise": "Aplique a mesma fórmula matemática (tônica + 4 semitons + 3 semitons) para descobrir e montar o acorde de Sol Maior (G) do zero.",
+          "time_estimate": "15 min",
+          "key_chords": ["C", "E", "G", "Em"]
+        },
+        {
+          "id": 103,
+          "number": 3,
+          "title": "Ritmo, Pulso e Compassos",
+          "concept": "O compasso organiza o fluxo do som em porções iguais de tempo. O momento mais importante é o tempo 1 (a 'cabeça do compasso') — o instante exato em que o pé bate no chão. Compassos 4/4 ditam quatro tempos regulares (pop/rock), enquanto o 2/4 divide o ciclo em dois tempos fortes e cadenciados, base do samba e pagode.",
+          "practical_example": "Em uma roda de samba tocada em 2/4, os instrumentos de harmonia e a percussão acentuam fortemente o segundo tempo, gerando o balanço característico que empurra a música para frente.",
+          "exercise": "Configure um metrônomo digital para 70 BPM e pratique bater palma rigorosamente apenas no tempo 1 de cada compasso de 4/4.",
+          "time_estimate": "15 min",
+          "key_chords": ["C", "G7", "F", "Am"]
+        },
+        {
+          "id": 104,
+          "number": 4,
+          "title": "O Capotraste e a Transposição Simples",
+          "concept": "O capotraste é uma pestana mecânica encaixada no braço do instrumento que encurta o comprimento das cordas, elevando a tonalidade instantaneamente. Ele permite adaptar a música à voz do cantor sem obrigar o instrumentista a redescobrir acordes difíceis.",
+          "practical_example": "Se a vocalista pede a música em Sol Maior (G), mas os acordes exigem pestanas difíceis, coloque o capotraste na 5ª casa e toque os acordes abertos de Dó Maior (C, Am, F, G). O som real soará em Sol Maior para o público, com o conforto de tocar em Dó.",
+          "exercise": "Simule a adaptação de uma música em Ré Maior utilizando o capotraste para tocá-la confortavelmente usando os shapes de Dó.",
+          "time_estimate": "15 min",
+          "key_chords": ["C", "Am", "F", "G", "D"]
+        }
+      ]
+    },
+    {
+      "level": 2,
+      "title": "O Mecanismo da Harmonia (Campos e Funções)",
+      "description": "Entender a gravidade musical, campos harmônicos e funções de cada grau.",
+      "levelBadge": "Intermediário",
+      "badgeColor": "amber",
+      "modules": [
+        {
+          "id": 201,
+          "number": 1,
+          "title": "Intervalos na Prática (A Distância Real)",
+          "concept": "Intervalo é a distância medida entre duas notas. No braço do instrumento, cada casa representa um semitom. Compreender intervalos é o segredo para destravar o pensamento harmônico, pois os acordes são pilhas de intervalos tocados simultaneamente.",
+          "practical_example": "Para achar a terça maior de Dó (Mi), caminhe 4 casas para a frente na mesma corda. Essa contagem de 4 semitons transforma a raiz em um acorde com sonoridade luminosa.",
+          "exercise": "Encontre uma nota natural, caminhe 3 semitons para a frente e identifique o intervalo de terça menor.",
+          "time_estimate": "15 min",
+          "key_chords": ["C", "E", "Am", "G"]
+        },
+        {
+          "id": 202,
+          "number": 2,
+          "title": "O Campo Harmônico Maior e Menor Natural",
+          "concept": "O campo harmônico é a 'família' de acordes que nascem naturalmente a partir das notas de uma escala. Conhecer a família de acordes de uma tonalidade explica matematicamente por que determinados acordes sempre soam bem juntos.",
+          "practical_example": "Na tonalidade de Dó Maior (C), a família natural é C, Dm, Em, F, G, Am e Bdim. Qualquer música pop que utilize esses acordes vai soar coesa e perfeitamente afinada.",
+          "exercise": "Esboce os sete acordes que compõem o campo harmônico da tonalidade de Sol Maior (G).",
+          "time_estimate": "20 min",
+          "key_chords": ["C", "Dm", "Em", "F", "G", "Am"]
+        },
+        {
+          "id": 203,
+          "number": 3,
+          "title": "A Função Detalhada de Cada Grau (O Papel de Cada Acorde)",
+          "concept": "Entender o que cada grau faz na música revela o porquê de as sequências seguirem certas ordens: Grau I (Tônica) é o Lar/Repouso estável; Grau II (Supertônica) funciona como um conector suave que prepara o caminho; Grau III (Mediante) traz uma cor melancólica e suspensa; Grau IV (Subdominante) é o Afastamento leve; Grau V (Dominante) é a Tensão máxima que implora resolução; Grau VI (Submediante) atua como um repouso secundário melancólico; Grau VII (Sensível) gera instabilidade pura que resolve na tônica.",
+          "practical_example": "Quando uma música toca a sequência I -> vi -> ii -> V (como C -> Am -> Dm -> G7), ela faz uma viagem estruturada: sai de casa (I), visita um parente (vi), passa pelo conector (ii), cria o desespero da tensão (V) e retorna para casa em paz (I).",
+          "exercise": "Toque a progressão I - vi - ii - V em Dó Maior e identifique mentalmente a sensação gerada por cada grau.",
+          "time_estimate": "20 min",
+          "key_chords": ["C", "Am", "Dm", "G7"]
+        },
+        {
+          "id": 204,
+          "number": 4,
+          "title": "Por Que as Músicas Seguem Determinadas Sequências?",
+          "concept": "As sequências de acordes não são aleatórias; elas obedecem à gravidade harmônica baseada no Ciclo das Quintas e na resolução de tensões. O ouvido humano anseia por movimento que vai da estabilidade à tensão e retorna à estabilidade.",
+          "practical_example": "A cadência ii - V - I (ex: Dm7 -> G7 -> C7M) é a mais utilizada na história porque o acorde menor prepara o dominante, que por sua vez possui um trítono (intervalo tenso) que se resolve perfeitamente no acorde de repouso.",
+          "exercise": "Pratique a transição limpa da cadência ii - V - I compreendendo a física da resolução do trítono.",
+          "time_estimate": "20 min",
+          "key_chords": ["Dm7", "G7", "C7M"]
+        }
+      ]
+    },
+    {
+      "level": 3,
+      "title": "Mapeamento do Braço, Pentatônicas & Tablaturas",
+      "description": "Domínio visual do braço com CAGED, pentatônicas e leitura avançada de tabs.",
+      "levelBadge": "Avançado",
+      "badgeColor": "violet",
+      "modules": [
+        {
+          "id": 301,
+          "number": 1,
+          "title": "O Guia Definitivo: Sistema CAGED e Oitavas",
+          "concept": "Decorar casa por casa no braço é ineficiente. O Sistema CAGED utiliza os cinco formatos básicos de acordes abertos (C, A, G, E, D) encadeados sequencialmente como blocos de construção, permitindo tocar qualquer acorde em qualquer região, unido às âncoras de oitava.",
+          "practical_example": "Conhecendo o formato aberto de Mi (E) na 1ª casa, basta aplicar a pestana e arrastá-lo geometricamente pelas casas seguintes para formar qualquer acorde maior ao longo do braço.",
+          "exercise": "Encontre e execute o acorde de Sol Maior (G) em três posições completamente diferentes usando o CAGED.",
+          "time_estimate": "20 min",
+          "key_chords": ["C", "A", "G", "E", "D"]
+        },
+        {
+          "id": 302,
+          "number": 2,
+          "title": "Leitura Avançada de Tablaturas (Claves, Símbolos e Efeitos)",
+          "concept": "A tablatura representa as cordas e os números das casas. Para tocar com expressividade, é preciso dominar os símbolos e claves de articulação: 'h' (hammer-on), 'p' (pull-off), '/' e '\\' (slide), '~' (vibrato), 'b' (bend/curva de corda), além de marcas de compasso e claves rítmicas na partitura de apoio.",
+          "practical_example": "Num trecho como G|---5h7p5--/9~---|, traduz-se em: toque a 5ª casa, bata o dedo na 7ª sem palhetar (hammer-on), puxe de volta (pull-off), deslize até a 9ª casa (slide) e faça um vibrato expressivo.",
+          "exercise": "Abra o TabLab no CIFRALAB e monte uma frase melódica usando hammer-on e slide.",
+          "time_estimate": "20 min",
+          "key_chords": ["Am7", "D7(9)", "G7M"]
+        },
+        {
+          "id": 303,
+          "number": 3,
+          "title": "O Poder da Escala Pentatônica (Como Improvisar Sem Errar)",
+          "concept": "A escala pentatônica possui apenas 5 notas e foi construída eliminando intervalos dissonantes ásperos. Isso significa que, independentemente do acorde de fundo, é quase impossível tocar uma nota 'falsa' ou desagradável, tornando-a a principal ferramenta para iniciar na improvisação.",
+          "practical_example": "Se a banda toca um rock ou baião em Lá Menor (Am), abra o Shape 1 da Pentatônica a partir da 5ª casa. Qualquer combinação de notas ali dentro soará coesa, enérgica e com cara de solo profissional.",
+          "exercise": "Memorize o Shape 1 da pentatônica menor e execute-o com metrônomo até que a digitação flua sem hesitação.",
+          "time_estimate": "20 min",
+          "key_chords": ["Am", "C", "D", "Em", "G"]
+        }
+      ]
+    },
+    {
+      "level": 4,
+      "title": "Modos Gregos & Cores Melódicas",
+      "description": "Explorar atmosferas sonoras, sonoridades modais e improviso no palco.",
+      "levelBadge": "Modos",
+      "badgeColor": "cyan",
+      "modules": [
+        {
+          "id": 401,
+          "number": 1,
+          "title": "Introdução aos Modos Gregos (Cores e Atmosferas)",
+          "concept": "Os modos gregos são escalas derivadas da escala maior natural iniciadas a partir de graus diferentes. Cada modo carrega uma 'cor' emocional única que altera a atmosfera da composição.",
+          "practical_example": "O modo Lídio (4º grau) possui uma quarta aumentada que confere um som flutuante, mágico e espacial, muito usado em trilhas de cinema e MPB sofisticada.",
+          "exercise": "Execute a escala de Dó Maior começando e terminando na nota Fá, percebendo a sonoridade do modo Lídio.",
+          "time_estimate": "25 min",
+          "key_chords": ["F7M", "G", "Am", "C"]
+        },
+        {
+          "id": 402,
+          "number": 2,
+          "title": "O Modo Mixolídio no Improviso de Palco",
+          "concept": "O modo Mixolídio (5º grau da escala maior) possui uma sétima menor, encaixando-se perfeitamente sobre acordes dominantes com sétima e conferindo uma pitada imediata de blues, funk e groove.",
+          "practical_example": "Quando a banda está em um vamp (loop) de G7, solar utilizando as notas do modo Mixolídio de Sol garante que cada nota soe perfeitamente integrada à tensão do acorde.",
+          "exercise": "Improvise frases melódicas usando o modo Mixolídio sobre um acorde dominante prolongado.",
+          "time_estimate": "25 min",
+          "key_chords": ["G7", "C7M", "F", "Dm7"]
+        }
+      ]
+    },
+    {
+      "level": 5,
+      "title": "Harmonias Avançadas & Reharmonização",
+      "description": "Dominantes secundários, empréstimo modal e reharmonizações refinadas.",
+      "levelBadge": "Harmonia Pro",
+      "badgeColor": "rose",
+      "modules": [
+        {
+          "id": 501,
+          "number": 1,
+          "title": "Dominantes Secundários (A Tensão que Chega Antes)",
+          "concept": "Dominantes secundários são acordes com sétima pertencentes a outras tonalidades, inseridos temporariamente para puxar a resolução em direção a um grau que não seja a tônica principal, criando surpresas harmônicas.",
+          "practical_example": "Em uma progressão em Dó que vai para o Lá Menor (Am), inserir um E7 logo antes do Am cria uma força de atração gigantesca, tornando a chegada ao menor muito mais dramática.",
+          "exercise": "Substitua uma transição comum em sua cifra favorita por um dominante secundário que aponte para o acorde seguinte.",
+          "time_estimate": "25 min",
+          "key_chords": ["E7", "Am", "A7", "Dm", "C"]
+        },
+        {
+          "id": 502,
+          "number": 2,
+          "title": "Empréstimo Modal e Substituição por Trítono",
+          "concept": "O empréstimo modal pega acordes emprestados do campo menor paralelo para injetar drama. A substituição por trítono (subV7) troca um acorde dominante por outro a meio tom, mantendo a tensão com uma descida cromática no baixo.",
+          "practical_example": "Substituir um G7 seco por um Db7 antes de resolver em C cria uma descida de baixo cromática sofisticada, típica de bossa nova e jazz.",
+          "exercise": "Aplique a substituição por trítono em uma cadência ii - V - I básica.",
+          "time_estimate": "30 min",
+          "key_chords": ["G7", "C7M", "Fm"]
+        }
+      ]
+    },
+    {
+      "level": 6,
+      "title": "Maestria, Ouvido Pro, Voice Leading & Dinâmica de Palco",
+      "description": "Tirar músicas de ouvido, condução de vozes, dinâmicas de palco e samba/MPB.",
+      "levelBadge": "Mestre",
+      "badgeColor": "orange",
+      "modules": [
+        {
+          "id": 601,
+          "number": 1,
+          "title": "O Guia Definitivo: Como Tirar Música de Ouvido Passo a Passo",
+          "concept": "Tirar música de ouvido não é dom místico; é um método lógico em 4 etapas cirúrgicas: 1) Achar a Tônica (vá direto ao final da música e ache o acorde de repouso). 2) Caçar o Baixo (isole a frequência mais grave para ver para onde a harmonia caminha). 3) Testar o Campo Harmônico (aplique as funções dos graus I, IV, V e vi). 4) Identificar Acordes Estranhos (busque dominantes secundários ou empréstimos modais).",
+          "practical_example": "Execute o protocolo ouvindo o final da música para achar o tom, isole o baixo e aplique a probabilidade das funções harmônicas. Em minutos a progressão se revela.",
+          "exercise": "Escolha uma música popular que você nunca tocou e aplique rigorosamente o método de 4 passos.",
+          "time_estimate": "25 min",
+          "key_chords": ["F7M", "C7(9)", "Dm7"]
+        },
+        {
+          "id": 602,
+          "number": 2,
+          "title": "Condução de Vozes (Voice Leading): O Segredo do Braço Fluido",
+          "concept": "Músicos amadores dão saltos gigantescos e desajeitados pelo braço do instrumento ao mudar de acorde. A Condução de Vozes ensina a trocar de acordes movendo apenas o dedo estritamente necessário (ou mantendo notas comuns), criando uma transição harmônica suave e conectada, sem 'buracos' no som.",
+          "practical_example": "Ao passar de C7M para Dm7, em vez de mudar toda a posição da mão de forma brusca, mantenha notas em comum ou use inversões próximas, fazendo com que a harmonia deslize de forma profissional.",
+          "exercise": "Pratique a transição entre 4 acordes do campo harmônico movendo os dedos o mínimo possível no braço.",
+          "time_estimate": "25 min",
+          "key_chords": ["C7M", "Dm7", "Em7", "F7M"]
+        },
+        {
+          "id": 603,
+          "number": 3,
+          "title": "Percepção Auditiva Aplicada (Ear Training Relacional)",
+          "concept": "Treinar o cérebro para reconhecer intervalos e cadências no ar sem precisar do instrumento. O ear training relacional foca em identificar auditivamente saltos melódicos e a diferença de peso entre tríades e tétrades.",
+          "practical_example": "Ouvir uma introdução e reconhecer de imediato se o salto do cantor foi uma quarta justa ou uma quinta justa, facilitando o início do arranjo sem tentativa e erro.",
+          "exercise": "Utilize aplicativos ou áudios de referência para identificar auditivamente intervalos de terça maior e quinta justa.",
+          "time_estimate": "20 min",
+          "key_chords": ["C", "G", "Am", "F"]
+        },
+        {
+          "id": 604,
+          "number": 4,
+          "title": "A Anatomia Harmônica do Samba, Pagode e MPB",
+          "concept": "O samba e a MPB refinada soam ricos porque utilizam 'elevadores' harmônicos: cadeias de dominantes secundários e acordes diminutos de passagem que criam movimento cromático suave no baixo.",
+          "practical_example": "Em vez de ir direto de C7M para Dm7 num samba em Dó, insere-se um diminuto no meio: C7M -> C#dim -> Dm7 -> G7(9). O C#dim age como degrau intermediário perfeito.",
+          "exercise": "Analise a cifra de um samba clássico no acervo do CIFRALAB e identifique os diminutos e extensões operando como passagens.",
+          "time_estimate": "30 min",
+          "key_chords": ["C7M", "C#dim", "Dm7", "G7(9)", "Am7"]
+        },
+        {
+          "id": 605,
+          "number": 5,
+          "title": "Psicologia de Palco, Groove e Resolução de Conflitos",
+          "concept": "Um músico completo não é apenas quem toca bem no quarto, mas quem sabe se comunicar no palco, respeitar o espaço da bateria e do baixo, lidar com falhas de equipamento e usar os Cues do CIFRALAB para comandar viradas e paradas sem confusão.",
+          "practical_example": "Se o cantor entra no tempo errado ou esquece a letra, o músico preparado usa pistas visuais e dinâmicas de palco para reajustar a banda sem que o público perceba a falha.",
+          "exercise": "Simule uma situação de corte repentino de som ou mudança de setlist de última hora utilizando os recursos de palco do CIFRALAB.",
+          "time_estimate": "20 min",
+          "key_chords": ["C", "G7", "Am", "F"]
+        }
+      ]
+    }
+  ]
+}

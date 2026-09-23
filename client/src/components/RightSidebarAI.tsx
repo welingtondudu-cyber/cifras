@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import type { Song, Setlist, InstrumentType, ScreenView } from '../types/music';
+import type { Song, Setlist, InstrumentType, ScreenView, AcademyModule } from '../types/music';
 import { streamHarmonicChat } from '../lib/api';
 import { optimizeHarmonicOrder } from '../chordEngine/harmonicOrder';
 import { saveTransitionCue } from '../lib/storage';
@@ -41,6 +41,7 @@ interface RightSidebarAIProps {
   promptToExecute?: string | null;
   onPromptExecuted?: () => void;
   userId?: string;
+  studyLesson?: { levelTitle: string; levelNumber: number; module: AcademyModule } | null;
 }
 
 interface ChatMessage {
@@ -177,6 +178,7 @@ export const RightSidebarAI: React.FC<RightSidebarAIProps> = ({
   promptToExecute,
   onPromptExecuted,
   userId,
+  studyLesson,
 }) => {
   const INITIAL_MESSAGE: ChatMessage = {
     id: 'welcome',
@@ -319,6 +321,17 @@ export const RightSidebarAI: React.FC<RightSidebarAIProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isOpen]);
 
+  // No modo web app mobile: travar rolagem de fundo quando o chat estiver aberto
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isOpen && window.innerWidth < 1024) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen]);
+
   // Executar prompt disparado externamente (ex: botão "Ordenar com IA")
   useEffect(() => {
     if (promptToExecute && !isStreaming) {
@@ -375,10 +388,21 @@ export const RightSidebarAI: React.FC<RightSidebarAIProps> = ({
           .join(', ')}`
       : 'Nenhum repertório selecionado no momento.';
 
+    const studyContext =
+      screenView === 'academy' && studyLesson
+        ? `[Tutor Especialista - CIFRALAB Academia] Contexto da Aula Atual: Nível ${studyLesson.levelNumber} (${studyLesson.levelTitle}) - Aula ${studyLesson.module.number}: "${studyLesson.module.title}".
+Conceito Teórico: "${studyLesson.module.concept}".
+Exemplo Prático: "${studyLesson.module.practical_example}".
+Exercício Proposto no Material: "${studyLesson.module.exercise}".
+Acordes Chave: ${studyLesson.module.key_chords?.join(', ') || 'Nenhum'}.
+Instrumento em Foco: ${instrument === 'cavaco' ? 'Cavaco (afinação Ré-Sol-Si-Ré)' : 'Violão (afinação Mi-Lá-Ré-Sol-Si-Mi)'}.
+Por favor, responda como um professor experiente e acolhedor de teoria musical e harmonia. Dê respostas detalhadas, com resoluções e gabaritos comentados dos exercícios se solicitado, exemplos musicais reais e dicas práticas de braço.`
+        : `[Tela: ${screenView}] ${setlistSummary}. Catálogo de músicas disponíveis no sistema: ${availableSongs
+            .map(s => `"${s.titulo}" (${s.artista} - ${s.estilo}, Tom: ${s.tom_original})`)
+            .join(', ')}.`;
+
     await streamHarmonicChat({
-      prompt: `[Tela: ${screenView}] ${setlistSummary}. Catálogo de músicas disponíveis no sistema: ${availableSongs
-        .map(s => `"${s.titulo}" (${s.artista} - ${s.estilo}, Tom: ${s.tom_original})`)
-        .join(', ')}. Mensagem do usuário: ${textToSend}`,
+      prompt: `${studyContext} Mensagem do usuário: ${textToSend}`,
       history: conversationHistory,
       tomAtual: currentKey,
       instrumento: instrument === 'cavaco' ? 'Cavaco' : 'Violão',
@@ -553,36 +577,45 @@ export const RightSidebarAI: React.FC<RightSidebarAIProps> = ({
   };
 
   return (
-    <aside
-      className={`fixed lg:sticky top-0 right-0 h-screen z-50 bg-[#161616] border-l border-zinc-800 flex flex-col transition-all duration-300 shadow-2xl ${
-        isOpen
-          ? 'w-[360px] sm:w-[420px] translate-x-0'
-          : 'w-0 translate-x-full lg:translate-x-0 lg:w-0 overflow-hidden'
-      }`}
-    >
-      {/* Top Header estilo Antigravity IDE */}
-      <div className="h-14 px-4 bg-[#1e1e1e] border-b border-zinc-800 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-orange-500/20 text-orange-400 border border-orange-500/40 flex items-center justify-center">
-            <Sparkles size={15} />
-          </div>
-          <div>
-            <span className="text-xs font-black tracking-tight text-white flex items-center gap-1.5">
-              ASSISTENTE IA
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            </span>
-            <p className="text-[10px] text-zinc-400">Harmonia e Repertório</p>
-          </div>
-        </div>
-
-        <button
+    <>
+      {/* Backdrop para mobile quando o painel lateral estiver aberto */}
+      {isOpen && (
+        <div
           onClick={onToggle}
-          title="Recolher painel"
-          className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
-        >
-          <ChevronRight size={18} />
-        </button>
-      </div>
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 lg:hidden animate-in fade-in duration-200"
+        />
+      )}
+
+      <aside
+        className={`fixed lg:static inset-y-0 right-0 h-full z-50 bg-[#161616] border-l border-zinc-800 flex flex-col transition-all duration-300 shadow-2xl shrink-0 ${
+          isOpen
+            ? 'w-full sm:w-[400px] lg:w-[420px] translate-x-0'
+            : 'w-0 translate-x-full lg:translate-x-0 lg:w-0 overflow-hidden pointer-events-none'
+        }`}
+      >
+        {/* Top Header estilo Antigravity IDE (Fixo no Lado Direito) */}
+        <div className="h-14 px-4 bg-[#1e1e1e] border-b border-zinc-800 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-orange-500/20 text-orange-400 border border-orange-500/40 flex items-center justify-center">
+              <Sparkles size={15} />
+            </div>
+            <div>
+              <span className="text-xs font-black tracking-tight text-white flex items-center gap-1.5">
+                ASSISTENTE IA
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              </span>
+              <p className="text-[10px] text-zinc-400">Harmonia, Estudos & Palco</p>
+            </div>
+          </div>
+
+          <button
+            onClick={onToggle}
+            title="Recolher painel"
+            className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
 
       {/* Barra de Múltiplos Chats & Histórico Isolado por Usuário */}
       <div className="px-3 py-2 bg-[#191919] border-b border-zinc-800 flex items-center justify-between gap-2 shrink-0 select-none relative z-30">
@@ -651,8 +684,8 @@ export const RightSidebarAI: React.FC<RightSidebarAIProps> = ({
         </button>
       </div>
 
-      {/* Histórico de Mensagens */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-zinc-700">
+      {/* Histórico de Mensagens isolado */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-zinc-700 overscroll-contain">
         {messages.map(msg => (
           <div
             key={msg.id}
@@ -805,7 +838,58 @@ export const RightSidebarAI: React.FC<RightSidebarAIProps> = ({
 
       {/* Sugestões Rápidas de Prompt */}
       <div className="p-2.5 bg-[#1a1a1a] border-t border-zinc-800 flex gap-2 overflow-x-auto scrollbar-none">
-        {screenView === 'setlist' ? (
+        {screenView === 'academy' ? (
+          <>
+            <button
+              onClick={() =>
+                handleSend(
+                  studyLesson
+                    ? `Por favor, mostre a resolução passo a passo e o gabarito comentado do exercício da aula "${studyLesson.module.title}": "${studyLesson.module.exercise}".`
+                    : 'Pode me ajudar a resolver e entender os exercícios propostos nas trilhas de teoria musical?'
+                )
+              }
+              className="text-xs px-3 py-1.5 rounded-full bg-orange-500/20 text-orange-400 font-semibold border border-orange-500/40 hover:bg-orange-500/30 whitespace-nowrap transition-colors"
+            >
+              💡 Gabarito do Exercício
+            </button>
+            <button
+              onClick={() =>
+                handleSend(
+                  studyLesson
+                    ? `Dê 3 exemplos práticos de músicas reais e conhecidas (Samba/MPB/Pop) que aplicam o conceito: "${studyLesson.module.concept}", mostrando os acordes no ${instrument === 'cavaco' ? 'Cavaco' : 'Violão'}.`
+                    : 'Dê exemplos práticos de músicas reais usando funções harmônicas e campos harmônicos.'
+                )
+              }
+              className="text-xs px-3 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-750 text-zinc-300 whitespace-nowrap border border-zinc-700 transition-colors"
+            >
+              🎸 Exemplos em Músicas
+            </button>
+            <button
+              onClick={() =>
+                handleSend(
+                  studyLesson
+                    ? `Crie um novo exercício prático e desafiador sobre o tema "${studyLesson.module.title}", para eu testar meus conhecimentos.`
+                    : 'Gere um exercício de teoria musical para eu testar meu conhecimento agora.'
+                )
+              }
+              className="text-xs px-3 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-750 text-zinc-300 whitespace-nowrap border border-zinc-700 transition-colors"
+            >
+              🎯 Novo Exercício de Treino
+            </button>
+            <button
+              onClick={() =>
+                handleSend(
+                  studyLesson
+                    ? `Explique de maneira simples e intuitiva, usando analogias de palco, o conceito: "${studyLesson.module.concept}".`
+                    : 'Explique de maneira simples a lógica de formação de acordes e funções harmônicas.'
+                )
+              }
+              className="text-xs px-3 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-750 text-zinc-300 whitespace-nowrap border border-zinc-700 transition-colors"
+            >
+              🔍 Explicar com Analogia
+            </button>
+          </>
+        ) : screenView === 'setlist' ? (
           <>
             <button
               onClick={() =>
@@ -898,5 +982,8 @@ export const RightSidebarAI: React.FC<RightSidebarAIProps> = ({
         </button>
       </div>
     </aside>
+    </>
   );
 };
+
+export const LeftSidebarAI = RightSidebarAI;
