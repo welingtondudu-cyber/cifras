@@ -14,6 +14,7 @@ import type { AcademyLevel, AcademyModule, UserProfile } from '../../types/music
 import academyData from '../../data/academyContent.json';
 import {
   getSavedAcademyProgress,
+  saveAcademyProgress,
   setModuleCompletion
 } from '../../lib/storage';
 import {
@@ -37,7 +38,7 @@ export const AcademyView: React.FC<AcademyViewProps> = ({
 }) => {
   const [levels, setLevels] = useState<AcademyLevel[]>([]);
   const [progressMap, setProgressMap] = useState<Record<number, boolean>>(() => {
-    return getSavedAcademyProgress();
+    return getSavedAcademyProgress(user?.id);
   });
 
   // Estado para controlar níveis expandidos (todos iniciam OCULTOS por padrão)
@@ -69,34 +70,50 @@ export const AcademyView: React.FC<AcademyViewProps> = ({
     }
   }, [activeLesson, onSelectActiveLesson]);
 
-  // Sincronizar progresso com Supabase se usuário estiver autenticado
+  // Carregar e sincronizar progresso específico do usuário logado
   useEffect(() => {
-    if (user?.id) {
-      fetchUserAcademyProgress(user.id).then((dbProgress) => {
-        if (Object.keys(dbProgress).length > 0) {
-          setProgressMap((prev) => {
-            const merged = { ...prev, ...dbProgress };
-            localStorage.setItem('cifralab_academy_progress', JSON.stringify(merged));
-            return merged;
-          });
-        }
-      });
+    if (!user?.id) {
+      setProgressMap(getSavedAcademyProgress());
+      return;
     }
+
+    // 1. Carregar do armazenamento local particionado pelo ID do usuário
+    const localUserProgress = getSavedAcademyProgress(user.id);
+    setProgressMap(localUserProgress);
+
+    // 2. Sincronizar com o banco Supabase do usuário
+    fetchUserAcademyProgress(user.id).then((dbProgress) => {
+      if (dbProgress) {
+        setProgressMap((prev) => {
+          const merged = { ...localUserProgress, ...prev, ...dbProgress };
+          saveAcademyProgress(merged, user.id);
+          return merged;
+        });
+      }
+    }).catch(err => {
+      console.warn('Erro ao carregar progresso da Academy no Supabase:', err);
+    });
   }, [user?.id]);
 
   // Escutar eventos de sincronização de progresso
   useEffect(() => {
     const handleProgressUpdate = (e: Event) => {
-      const custom = e as CustomEvent<Record<number, boolean>>;
+      const custom = e as CustomEvent<{ progress: Record<number, boolean>; userId?: string } | Record<number, boolean>>;
       if (custom.detail) {
-        setProgressMap(custom.detail);
+        if ('progress' in custom.detail) {
+          if (!custom.detail.userId || custom.detail.userId === user?.id) {
+            setProgressMap(custom.detail.progress);
+          }
+        } else {
+          setProgressMap(custom.detail);
+        }
       }
     };
     window.addEventListener('cifralab_academy_progress_updated', handleProgressUpdate);
     return () => {
       window.removeEventListener('cifralab_academy_progress_updated', handleProgressUpdate);
     };
-  }, []);
+  }, [user?.id]);
 
   // Lista plana de todos os módulos para navegação sequencial (Próxima/Anterior)
   const allModulesFlat = useMemo(() => {
@@ -113,10 +130,11 @@ export const AcademyView: React.FC<AcademyViewProps> = ({
     return list;
   }, [levels]);
 
-  // Alternar conclusão de lição (optimistic UI + local storage + Supabase)
+  // Alternar conclusão de lição (optimistic UI + local storage por usuário + Supabase)
   const handleToggleComplete = (moduleId: number) => {
+    const userId = user?.id;
     const nextState = !progressMap[moduleId];
-    const updated = setModuleCompletion(moduleId, nextState);
+    const updated = setModuleCompletion(moduleId, nextState, userId);
     setProgressMap(updated);
 
     if (user?.id) {

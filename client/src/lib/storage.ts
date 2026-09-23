@@ -221,31 +221,33 @@ export function getTransitionForSongs(
   return all[key] || null;
 }
 
-// 6. CIFRALAB Academy - Progresso dos Módulos/Lições
-export function getSavedAcademyProgress(): Record<number, boolean> {
+// 6. CIFRALAB Academy - Progresso dos Módulos/Lições por Usuário
+export function getSavedAcademyProgress(userId?: string): Record<number, boolean> {
   try {
-    const raw = localStorage.getItem(STORAGE_KEYS.ACADEMY_PROGRESS);
+    const key = userId ? `${STORAGE_KEYS.ACADEMY_PROGRESS}_${userId}` : STORAGE_KEYS.ACADEMY_PROGRESS;
+    const raw = localStorage.getItem(key);
     return raw ? JSON.parse(raw) : {};
   } catch {
     return {};
   }
 }
 
-export function saveAcademyProgress(progress: Record<number, boolean>): void {
+export function saveAcademyProgress(progress: Record<number, boolean>, userId?: string): void {
   try {
-    localStorage.setItem(STORAGE_KEYS.ACADEMY_PROGRESS, JSON.stringify(progress));
+    const key = userId ? `${STORAGE_KEYS.ACADEMY_PROGRESS}_${userId}` : STORAGE_KEYS.ACADEMY_PROGRESS;
+    localStorage.setItem(key, JSON.stringify(progress));
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('cifralab_academy_progress_updated', { detail: progress }));
+      window.dispatchEvent(new CustomEvent('cifralab_academy_progress_updated', { detail: { progress, userId } }));
     }
   } catch (err) {
     console.error('Erro ao salvar progresso da Academy:', err);
   }
 }
 
-export function setModuleCompletion(moduleId: number, completed: boolean): Record<number, boolean> {
-  const current = getSavedAcademyProgress();
+export function setModuleCompletion(moduleId: number, completed: boolean, userId?: string): Record<number, boolean> {
+  const current = getSavedAcademyProgress(userId);
   const updated = { ...current, [moduleId]: completed };
-  saveAcademyProgress(updated);
+  saveAcademyProgress(updated, userId);
   return updated;
 }
 
