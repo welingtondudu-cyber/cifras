@@ -28,27 +28,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     }
   };
 
-  const handleQuickLogin = (demoEmail: string, demoPass: string) => {
-    setEmail(demoEmail);
-    setPassword(demoPass);
-    // Realiza login diretamente
-    setLoading(true);
-    signInUser(demoEmail, demoPass).then(res => {
-      setLoading(false);
-      if (res.user) {
-        onLoginSuccess(res.user);
-      } else {
-        // Fallback local se o usuário ainda não foi criado no Supabase
-        const fallbackUser: UserProfile = {
-          id: 'welington-user',
-          email: demoEmail,
-          name: 'Welington Silva'
-        };
-        localStorage.setItem('cifralab_user', JSON.stringify(fallbackUser));
-        onLoginSuccess(fallbackUser);
-      }
-    });
-  };
 
   return (
     <div className="min-h-screen bg-[#121212] text-zinc-100 flex flex-col items-center justify-center p-4 selection:bg-orange-500/30 selection:text-orange-300">
@@ -122,19 +101,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           </button>
         </form>
 
-        {/* Informação e Acesso Rápido de Demonstração */}
+        {/* Informação sobre acesso */}
         <div className="mt-6 pt-5 border-t border-zinc-800 text-center">
-          <p className="text-[11px] text-zinc-500 mb-3">
-            O cadastro de novos usuários é gerenciado diretamente pela administração no Supabase.
+          <p className="text-[11px] text-zinc-500">
+            Acesso restrito. O gerenciamento de credenciais é realizado pela administração.
           </p>
-
-          <button
-            type="button"
-            onClick={() => handleQuickLogin('welington@cifralab.com', 'Cifras6338!')}
-            className="text-xs text-orange-400 hover:text-orange-300 hover:underline font-medium"
-          >
-            Acessar com credencial rápida (Welington) ›
-          </button>
         </div>
       </div>
     </div>
