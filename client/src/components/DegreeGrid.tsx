@@ -16,6 +16,8 @@ interface DegreeGridProps {
   currentSongIndex?: number;
   totalSongsInSetlist?: number;
   nextSong?: Song;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
 }
 
 export const DegreeGrid: React.FC<DegreeGridProps> = ({
@@ -29,6 +31,8 @@ export const DegreeGrid: React.FC<DegreeGridProps> = ({
   currentSongIndex,
   totalSongsInSetlist,
   nextSong,
+  isFavorite = false,
+  onToggleFavorite,
 }) => {
   const chordSequence: string[] = [];
   parsedSong.lines.forEach(line => {
@@ -61,6 +65,8 @@ export const DegreeGrid: React.FC<DegreeGridProps> = ({
         currentSongIndex={currentSongIndex}
         totalSongsInSetlist={totalSongsInSetlist}
         nextSong={nextSong}
+        isFavorite={isFavorite}
+        onToggleFavorite={onToggleFavorite}
       />
 
       {/* Carrossel Horizontal de Diagramas SVG de Acordes com Troca de Forma */}

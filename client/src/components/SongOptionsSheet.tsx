@@ -131,7 +131,7 @@ export const SongOptionsSheet: React.FC<SongOptionsSheetProps> = ({
       <div className="absolute inset-0" onClick={onClose} />
 
       {/* Conteúdo do Bottom Sheet */}
-      <div className="relative w-full max-w-lg bg-[#1c1c1e] text-zinc-100 rounded-t-3xl border-t border-zinc-800 shadow-2xl overflow-hidden max-h-[88vh] flex flex-col animate-in slide-in-from-bottom duration-300">
+      <div data-scroll-control="true" className="relative w-full max-w-lg bg-[#1c1c1e] text-zinc-100 rounded-t-3xl border-t border-zinc-800 shadow-2xl overflow-hidden max-h-[88vh] flex flex-col animate-in slide-in-from-bottom duration-300">
         {/* Puxador Superior Tátil */}
         <div className="pt-3 pb-1 cursor-grab flex items-center justify-center" onClick={onClose}>
           <div className="w-10 h-1 bg-zinc-600 rounded-full" />

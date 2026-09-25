@@ -298,22 +298,20 @@ Você que me faz cantar, assim`;
                 <button
                   type="button"
                   onClick={() => setCreateMode('single')}
-                  className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${
-                    createMode === 'single'
+                  className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${createMode === 'single'
                       ? 'bg-orange-500 text-white shadow'
                       : 'text-zinc-400 hover:text-white'
-                  }`}
+                    }`}
                 >
                   Digitar / Colar Cifra
                 </button>
                 <button
                   type="button"
                   onClick={() => setCreateMode('bulk')}
-                  className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-all ${
-                    createMode === 'bulk'
+                  className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-all ${createMode === 'bulk'
                       ? 'bg-orange-500 text-white shadow'
                       : 'text-zinc-400 hover:text-white'
-                  }`}
+                    }`}
                 >
                   <UploadCloud size={15} />
                   <span>Upload Massivo (.txt)</span>
@@ -425,22 +423,20 @@ Você que me faz cantar, assim`;
                     <button
                       type="button"
                       onClick={() => setFormatType('standard')}
-                      className={`px-2.5 py-1 rounded text-xs font-bold transition-all ${
-                        formatType === 'standard'
+                      className={`px-2.5 py-1 rounded text-xs font-bold transition-all ${formatType === 'standard'
                           ? 'bg-orange-500 text-white'
                           : 'text-zinc-400 hover:text-white'
-                      }`}
+                        }`}
                     >
                       Cifra Club
                     </button>
                     <button
                       type="button"
                       onClick={() => setFormatType('chordpro')}
-                      className={`px-2.5 py-1 rounded text-xs font-bold transition-all ${
-                        formatType === 'chordpro'
+                      className={`px-2.5 py-1 rounded text-xs font-bold transition-all ${formatType === 'chordpro'
                           ? 'bg-orange-500 text-white'
                           : 'text-zinc-400 hover:text-white'
-                      }`}
+                        }`}
                     >
                       ChordPro
                     </button>
@@ -610,16 +606,14 @@ Você que me faz cantar, assim`;
                         onSelectSong(song);
                         onClose();
                       }}
-                      className={`p-3 sm:p-3.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all active:scale-[0.99] ${
-                        isActive
+                      className={`p-3 sm:p-3.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all active:scale-[0.99] ${isActive
                           ? 'bg-orange-500/15 border-orange-500/50 shadow-md'
                           : 'bg-[#181818] border-zinc-800 hover:border-zinc-700 hover:bg-[#202020]'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-mono font-bold text-xs sm:text-[13px] border shadow-inner ${
-                          isActive ? 'bg-orange-500 border-orange-400 text-white' : 'bg-zinc-800 border-zinc-750 text-orange-400'
-                        }`}>
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-mono font-bold text-xs sm:text-[13px] border shadow-inner ${isActive ? 'bg-orange-500 border-orange-400 text-white' : 'bg-zinc-800 border-zinc-750 text-orange-400'
+                          }`}>
                           {song.tom_original}
                         </div>
 

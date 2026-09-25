@@ -1,5 +1,6 @@
 import React from 'react';
 import type { ViewMode, Setlist, Song } from '../types/music';
+import { Star } from 'lucide-react';
 
 interface StageTabsHeaderProps {
   title: string;
@@ -10,6 +11,8 @@ interface StageTabsHeaderProps {
   currentSongIndex?: number;
   totalSongsInSetlist?: number;
   nextSong?: Song;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
 }
 
 export const StageTabsHeader: React.FC<StageTabsHeaderProps> = ({
@@ -19,6 +22,8 @@ export const StageTabsHeader: React.FC<StageTabsHeaderProps> = ({
   currentSongIndex,
   totalSongsInSetlist,
   nextSong,
+  isFavorite = false,
+  onToggleFavorite,
 }) => {
   const isInSetlist = Boolean(activeSetlist && totalSongsInSetlist && totalSongsInSetlist > 0);
   const songNumber = (currentSongIndex ?? 0) + 1;
@@ -53,10 +58,29 @@ export const StageTabsHeader: React.FC<StageTabsHeaderProps> = ({
         </div>
       )}
 
-      <div className="flex items-center gap-2">
-        <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white">
-          {title}
-        </h1>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white">
+            {title}
+          </h1>
+
+          {onToggleFavorite && (
+            <button
+              onClick={onToggleFavorite}
+              className={`p-1.5 sm:p-2 rounded-xl border transition-all active:scale-90 ${
+                isFavorite
+                  ? 'bg-amber-500/15 border-amber-500/40 text-amber-400 shadow-sm'
+                  : 'bg-zinc-850/80 border-zinc-750 text-zinc-400 hover:text-white hover:border-zinc-600'
+              }`}
+              title={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+            >
+              <Star
+                size={18}
+                className={isFavorite ? 'fill-amber-400 text-amber-400' : 'text-current'}
+              />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="mt-1 flex items-center gap-2">

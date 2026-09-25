@@ -79,7 +79,7 @@ export const SongFloatingToolbar: React.FC<SongFloatingToolbarProps> = ({
   const hasNavigation = isInSetlist || onPrevSong !== undefined || onNextSong !== undefined;
 
   return (
-    <div className="fixed bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 z-40 w-[96%] max-w-md pointer-events-auto select-none">
+    <div data-scroll-control="true" className="fixed bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 z-40 w-[96%] max-w-md pointer-events-auto select-none">
       {/* Popover Rápido de Tom */}
       {showKeyPopover && (
         <div className="mb-2 p-3 bg-zinc-900/95 backdrop-blur-xl border border-zinc-700/80 rounded-2xl shadow-2xl flex items-center justify-between text-white animate-in fade-in slide-in-from-bottom-2 duration-200">

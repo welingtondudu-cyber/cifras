@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import type {
   Song,
   Setlist,
@@ -53,7 +53,8 @@ import {
   getSavedCustomSongs,
   saveCustomSong,
   getSavedCustomSetlists,
-  saveAllSetlists
+  saveAllSetlists,
+  mergeSongsWithLocal
 } from './lib/storage';
 
 export function App() {
@@ -79,7 +80,7 @@ export function App() {
     try {
       const raw = sessionStorage.getItem('cifralab_active_nav');
       if (raw) return JSON.parse(raw);
-    } catch {}
+    } catch { }
     return null;
   }, []);
 
@@ -105,10 +106,12 @@ export function App() {
   // Dados com persistência híbrida
   const [songs, setSongs] = useState<Song[]>(() => {
     const cached = getSavedCustomSongs();
-    return cached.length > 0 ? cached : DEFAULT_SONGS;
+    return mergeSongsWithLocal(DEFAULT_SONGS, cached);
   });
   const [setlists, setSetlists] = useState<Setlist[]>(() => {
-    const list = getSavedCustomSetlists();
+    const list = getSavedCustomSetlists().filter(
+      s => s.id !== 'set-favoritas' && s.nome.trim().toLowerCase() !== 'favoritas'
+    );
     const favIds = getSavedFavorites();
     const hasFavSetlist = list.some(
       s => s.id === 'set-favoritos' || s.nome.trim().toLowerCase() === 'favoritos'
@@ -262,7 +265,7 @@ export function App() {
         navigationSource,
         songListFilters
       }));
-    } catch {}
+    } catch { }
   }, [screenView, activeSong?.id, activeSetlist?.id, songIndexInSetlist, navigationSource, songListFilters]);
 
   // Smart Scroll Hook com Avanço Automático e Rolagem Dupla
@@ -271,6 +274,21 @@ export function App() {
     activeSetlist.itens &&
     songIndexInSetlist < activeSetlist.itens.length - 1
   );
+
+  const mainScrollRef = useRef<HTMLElement | null>(null);
+
+  const scrollToTop = (smooth = true) => {
+    if (mainScrollRef.current) {
+      if (mainScrollRef.current.scrollTo) {
+        mainScrollRef.current.scrollTo({ top: 0, behavior: smooth ? 'smooth' : 'auto' });
+      } else {
+        mainScrollRef.current.scrollTop = 0;
+      }
+    }
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: smooth ? 'smooth' : 'auto' });
+    }
+  };
 
   const {
     isPlaying,
@@ -284,6 +302,7 @@ export function App() {
     setScrollCycles,
     setAutoAdvanceEnabled
   } = useSmartScroll({
+    scrollContainerRef: mainScrollRef,
     canAutoAdvance,
     onAutoAdvance: () => {
       handleNextSong();
@@ -308,7 +327,12 @@ export function App() {
 
       const dbSetlists = await fetchSetlists();
       if (dbSetlists && dbSetlists.length > 0) {
-        const clean = dbSetlists.filter(s => s.id !== 'set-1' && s.nome.trim().toLowerCase() !== 'recentes');
+        const clean = dbSetlists.filter(
+          s => s.id !== 'set-1' &&
+            s.nome.trim().toLowerCase() !== 'recentes' &&
+            s.id !== 'set-favoritas' &&
+            s.nome.trim().toLowerCase() !== 'favoritas'
+        );
         setSetlists(clean);
         saveAllSetlists(clean);
         if (savedNav?.activeSetlistId) {
@@ -325,7 +349,7 @@ export function App() {
             prev.map(s => (savedAvatars[s.artista] ? { ...s, avatar_url: savedAvatars[s.artista] } : s))
           );
         }
-      } catch {}
+      } catch { }
     }
 
     init();
@@ -388,7 +412,7 @@ export function App() {
   }) => {
     setSongListFilters(filters || {});
     setScreenView('songs_list');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollToTop();
   };
 
   // Navegar via Barra Inferior
@@ -397,7 +421,7 @@ export function App() {
       setActiveSetlist(setlists[0]);
     }
     setScreenView(view);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollToTop();
   };
 
   // Retorno inteligente da tela de palco / cifra de acordo com a origem
@@ -413,7 +437,7 @@ export function App() {
     } else {
       setScreenView('home');
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollToTop();
   };
 
   const stageBackLabel = useMemo(() => {
@@ -451,14 +475,14 @@ export function App() {
     setSemitones(0);
     setNavigationSource(origin || { type: 'home' });
     setScreenView('stage');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollToTop();
   };
 
   // Abrir detalhes do Repertório
   const handleOpenSetlist = (setlist: Setlist) => {
     setActiveSetlist(setlist);
     setScreenView('setlist');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollToTop();
   };
 
   // Iniciar Reprodução do Repertório no Palco
@@ -471,7 +495,7 @@ export function App() {
       setSemitones(0);
       setNavigationSource({ type: 'setlist', setlist: activeSetlist });
       setScreenView('stage');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      scrollToTop();
     }
   };
 
@@ -485,7 +509,7 @@ export function App() {
         setActiveSong(nextSongObj);
         setSongIndexInSetlist(nextIndex);
         setSemitones(0);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        scrollToTop();
       }
     }
   };
@@ -499,7 +523,7 @@ export function App() {
         setActiveSong(prevSongObj);
         setSongIndexInSetlist(prevIndex);
         setSemitones(0);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        scrollToTop();
       }
     }
   };
@@ -681,6 +705,7 @@ export function App() {
   // Remover item do repertório (com persistência no Supabase e cache local)
   const handleRemoveSetlistItem = async (itemId: string) => {
     if (!activeSetlist) return;
+    const itemToRemove = activeSetlist.itens.find(i => i.id === itemId);
     await removeSongFromSetlistDb(itemId);
     const filtered = activeSetlist.itens.filter(i => i.id !== itemId);
     const updated = { ...activeSetlist, itens: filtered };
@@ -690,6 +715,23 @@ export function App() {
       saveAllSetlists(next);
       return next;
     });
+
+    // Se estiver removendo do repertório "Favoritos", desmarca o favorito da cifra e salva
+    const isFavSetlist =
+      activeSetlist.id === 'set-favoritos' ||
+      activeSetlist.nome.trim().toLowerCase() === 'favoritos';
+
+    if (isFavSetlist && itemToRemove) {
+      const songIdToRemove = itemToRemove.musica_id || itemToRemove.musica?.id;
+      if (songIdToRemove) {
+        setFavoriteSongIds(prev => {
+          const next = new Set(prev);
+          next.delete(songIdToRemove);
+          saveFavorites(Array.from(next));
+          return next;
+        });
+      }
+    }
   };
 
   // Alternar privacidade do repertório
@@ -935,7 +977,7 @@ ${song.chordpro}`;
       const existing = JSON.parse(localStorage.getItem('cifralab_artist_avatars') || '{}');
       existing[artistName] = newAvatarUrl;
       localStorage.setItem('cifralab_artist_avatars', JSON.stringify(existing));
-    } catch {}
+    } catch { }
   };
 
   // Alternar arquivamento de Cifra
@@ -1001,7 +1043,11 @@ ${song.chordpro}`;
       {/* Container Principal com Suporte ao Chat Lateral Estilo IDE Antigravity (Fixo no Lado Direito) */}
       <div className="flex-1 flex overflow-hidden relative min-h-0">
         {/* Conteúdo Central com Rolagem Independente */}
-        <main className="flex-1 flex flex-col min-w-0 overflow-y-auto h-full pb-20 lg:pb-0 overscroll-contain">
+        <main
+          ref={mainScrollRef}
+          id="main-scroll-container"
+          className="flex-1 flex flex-col min-w-0 overflow-y-auto h-full pb-20 lg:pb-0 overscroll-contain"
+        >
 
           {/* TELA 1: HOME HUB (Repertórios com busca, Estilos e Artistas Principais) */}
           {screenView === 'home' && (
@@ -1135,6 +1181,8 @@ ${song.chordpro}`;
                       nextSong={nextSong}
                       onAskAITransition={handleAskAITransition}
                       showTransitionNotes={showTransitionNotes}
+                      isFavorite={favoriteSongIds.has(activeSong.id)}
+                      onToggleFavorite={() => handleToggleFavorite(activeSong)}
                     />
                   )}
 
@@ -1153,6 +1201,8 @@ ${song.chordpro}`;
                       currentSongIndex={songIndexInSetlist}
                       totalSongsInSetlist={activeSetlistNonArchivedItems.length}
                       nextSong={nextSong}
+                      isFavorite={favoriteSongIds.has(activeSong.id)}
+                      onToggleFavorite={() => handleToggleFavorite(activeSong)}
                     />
                   )}
 
@@ -1171,6 +1221,8 @@ ${song.chordpro}`;
                       currentSongIndex={songIndexInSetlist}
                       totalSongsInSetlist={activeSetlistNonArchivedItems.length}
                       nextSong={nextSong}
+                      isFavorite={favoriteSongIds.has(activeSong.id)}
+                      onToggleFavorite={() => handleToggleFavorite(activeSong)}
                     />
                   )}
                 </main>
@@ -1286,12 +1338,12 @@ ${song.chordpro}`;
         onOpenAITransitions={
           activeSetlist && nextSong
             ? () =>
-                handleAskAITransition(
-                  activeSong.titulo,
-                  nextSong.titulo,
-                  parsedSong.key,
-                  nextSong.tom_original
-                )
+              handleAskAITransition(
+                activeSong.titulo,
+                nextSong.titulo,
+                parsedSong.key,
+                nextSong.tom_original
+              )
             : undefined
         }
         onDownloadSong={() => handleDownloadSong(activeSong)}

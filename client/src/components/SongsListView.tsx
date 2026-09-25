@@ -230,6 +230,11 @@ export const SongsListView: React.FC<SongsListViewProps> = ({
   const handleSelectArtist = (artistName: string) => {
     setSelectedArtist(artistName);
     setActiveTab('songs');
+    const main = document.getElementById('main-scroll-container') || document.querySelector('main.overflow-y-auto');
+    if (main) {
+      if (main.scrollTo) main.scrollTo({ top: 0, behavior: 'smooth' });
+      else main.scrollTop = 0;
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 

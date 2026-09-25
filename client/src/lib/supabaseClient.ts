@@ -428,7 +428,12 @@ export async function fetchSetlists(): Promise<Setlist[]> {
         }))
         .sort((a: any, b: any) => a.ordem - b.ordem),
       created_at: s.created_at
-    })).filter((s: Setlist) => s.id !== 'set-1' && s.nome.trim().toLowerCase() !== 'recentes');
+    })).filter((s: Setlist) => (
+      s.id !== 'set-1' &&
+      s.nome.trim().toLowerCase() !== 'recentes' &&
+      s.id !== 'set-favoritas' &&
+      s.nome.trim().toLowerCase() !== 'favoritas'
+    ));
 
     const merged = mergeSetlistsWithLocal(mapped, localSetlists);
     saveAllSetlists(merged);

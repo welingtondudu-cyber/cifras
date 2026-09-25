@@ -22,6 +22,8 @@ interface ChordSheetViewProps {
   nextSong?: Song;
   onAskAITransition?: (fromTitle: string, toTitle: string, fromKey: string, toKey: string) => void;
   showTransitionNotes?: boolean;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
 }
 
 export const ChordSheetView: React.FC<ChordSheetViewProps> = ({
@@ -41,6 +43,8 @@ export const ChordSheetView: React.FC<ChordSheetViewProps> = ({
   nextSong,
   onAskAITransition,
   showTransitionNotes = true,
+  isFavorite = false,
+  onToggleFavorite,
 }) => {
   const [chordVariations, setChordVariations] = React.useState<Record<string, number>>({});
 
@@ -56,6 +60,8 @@ export const ChordSheetView: React.FC<ChordSheetViewProps> = ({
         currentSongIndex={currentSongIndex}
         totalSongsInSetlist={totalSongsInSetlist}
         nextSong={nextSong}
+        isFavorite={isFavorite}
+        onToggleFavorite={onToggleFavorite}
       />
 
       {/* Carrossel Horizontal de Diagramas SVG de Acordes com Troca de Forma */}

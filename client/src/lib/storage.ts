@@ -65,8 +65,10 @@ export function isRestrictedSetlist(s: { id?: string; nome?: string }): boolean 
     id === 'set-1' ||
     id === 'set-2' ||
     id === 'set-3' ||
+    id === 'set-favoritas' ||
     nome === 'recentes' ||
-    nome === 'projeto som'
+    nome === 'projeto som' ||
+    nome === 'favoritas'
   );
 }
 

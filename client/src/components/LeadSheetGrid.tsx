@@ -16,6 +16,8 @@ interface LeadSheetGridProps {
   currentSongIndex?: number;
   totalSongsInSetlist?: number;
   nextSong?: Song;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
 }
 
 type TimeSignature = '4/4' | '2/4' | '3/4' | '6/8';
@@ -36,6 +38,8 @@ export const LeadSheetGrid: React.FC<LeadSheetGridProps> = ({
   currentSongIndex,
   totalSongsInSetlist,
   nextSong,
+  isFavorite = false,
+  onToggleFavorite,
 }) => {
   // Reconhecimento automático inicial de fórmula de compasso
   const initialTimeSignature: TimeSignature = useMemo(() => {
@@ -120,6 +124,8 @@ export const LeadSheetGrid: React.FC<LeadSheetGridProps> = ({
         currentSongIndex={currentSongIndex}
         totalSongsInSetlist={totalSongsInSetlist}
         nextSong={nextSong}
+        isFavorite={isFavorite}
+        onToggleFavorite={onToggleFavorite}
       />
 
       {/* Carrossel Horizontal de Diagramas SVG de Acordes com Troca de Forma */}
