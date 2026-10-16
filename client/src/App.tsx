@@ -69,6 +69,33 @@ export function App() {
   });
   const [authChecking, setAuthChecking] = useState<boolean>(false);
 
+  // Controle de tema (Modo Claro / Escuro)
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    try {
+      const saved = localStorage.getItem('cifralab_theme');
+      if (saved === 'light' || saved === 'dark') return saved;
+    } catch {}
+    return 'dark';
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('cifralab_theme', theme);
+    } catch {}
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+    } else {
+      root.classList.add('light');
+      root.classList.remove('dark');
+    }
+  }, [theme]);
+
+  const handleToggleTheme = () => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
   // Rastreamento da origem de navegação para o botão Voltar da cifra
   type NavigationSource =
     | { type: 'home' }
@@ -1029,7 +1056,7 @@ ${song.chordpro}`;
   }
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-[#121212] text-zinc-100 flex flex-col antialiased selection:bg-orange-500/30 selection:text-orange-300">
+    <div className="h-screen w-screen overflow-hidden bg-slate-50 text-slate-900 dark:bg-[#121212] dark:text-zinc-100 flex flex-col antialiased selection:bg-orange-500/30 selection:text-orange-300 transition-colors duration-200">
       {/* Header Global Adaptativo (Presente em todas as telas) */}
       <div className="shrink-0 z-30">
         <GlobalHeader
@@ -1037,6 +1064,8 @@ ${song.chordpro}`;
           onToggleAIPanel={() => setIsAIPanelOpen(prev => !prev)}
           onLogout={handleLogout}
           onGoHome={() => setScreenView('home')}
+          theme={theme}
+          onToggleTheme={handleToggleTheme}
         />
       </div>
 

@@ -3,8 +3,14 @@
 @tailwind utilities;
 
 @layer base {
+  html.dark body {
+    @apply bg-[#121212] text-zinc-100;
+  }
+  html.light body {
+    @apply bg-slate-50 text-slate-900;
+  }
   body {
-    @apply bg-[#090d16] text-slate-100 min-h-screen antialiased selection:bg-cyan-500/30 selection:text-cyan-200;
+    @apply min-h-screen antialiased selection:bg-orange-500/30 selection:text-orange-400 transition-colors duration-200;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 }
@@ -15,17 +21,26 @@
   height: 6px;
 }
 
-::-webkit-scrollbar-track {
-  background: #0f172a;
+.dark ::-webkit-scrollbar-track {
+  background: #18181b;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #334155;
+.light ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+  border-radius: 9999px;
+}
+
+.light ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #0284c7;
+  background: #f97316;
 }
 
 @keyframes spin-slow {
@@ -55,3 +70,285 @@
 .animate-fadeIn {
   animation: fadeIn 0.15s ease-out forwards;
 }
+
+/* ==========================================================================
+   MODO CLARO DE ALTA DEFINIÇÃO E ELEGÂNCIA (HIGH-CONTRAST LIGHT MODE)
+   ========================================================================== */
+
+html.light {
+  color-scheme: light;
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+html.light body {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+/* Painéis, Headers, Modais e Cartões no Modo Claro */
+html.light .bg-\[\#090d16\],
+html.light .bg-\[\#121212\],
+html.light .bg-\[\#141414\],
+html.light .bg-\[\#141414\]\/70,
+html.light .bg-\[\#151515\],
+html.light .bg-\[\#161616\],
+html.light .bg-\[\#161616\]\/95,
+html.light .bg-\[\#181818\],
+html.light .bg-\[\#18181b\],
+html.light .bg-\[\#18181b\]\/95,
+html.light .bg-\[\#18181b\]\/90,
+html.light .bg-\[\#1c1c1c\],
+html.light .bg-\[\#1e1e1e\],
+html.light .bg-\[\#202020\],
+html.light .bg-zinc-950,
+html.light .bg-zinc-900,
+html.light .bg-zinc-900\/95,
+html.light .bg-zinc-900\/90,
+html.light .bg-zinc-900\/80,
+html.light .bg-zinc-900\/70,
+html.light .bg-zinc-900\/60,
+html.light .bg-zinc-900\/50,
+html.light .bg-zinc-900\/40,
+html.light .bg-zinc-900\/30,
+html.light .bg-zinc-850,
+html.light .bg-zinc-850\/80,
+html.light .bg-zinc-800,
+html.light .bg-zinc-800\/90,
+html.light .bg-zinc-800\/80,
+html.light .bg-zinc-800\/60,
+html.light .bg-slate-950,
+html.light .bg-slate-900 {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* Divisores internos suaves */
+html.light .divide-zinc-850 > :not([hidden]) ~ :not([hidden]),
+html.light .divide-zinc-800 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #e2e8f0 !important;
+}
+
+/* Sombras nos cartões do modo claro */
+html.light .shadow-lg,
+html.light .shadow-2xl,
+html.light .shadow-md {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.03) !important;
+}
+
+/* Hovers de cartões e botões neutros no modo claro */
+html.light .hover\:bg-\[\#161616\]:hover,
+html.light .hover\:bg-\[\#181818\]:hover,
+html.light .hover\:bg-\[\#202020\]:hover,
+html.light .hover\:bg-zinc-850:hover,
+html.light .hover\:bg-zinc-800:hover,
+html.light .hover\:bg-zinc-750:hover,
+html.light .hover\:bg-zinc-700:hover {
+  background-color: #f1f5f9 !important;
+}
+
+/* Bordas em geral no Modo Claro */
+html.light .border-zinc-850,
+html.light .border-zinc-800,
+html.light .border-zinc-800\/90,
+html.light .border-zinc-800\/80,
+html.light .border-zinc-750,
+html.light .border-zinc-700,
+html.light .border-zinc-700\/80,
+html.light .border-zinc-700\/60 {
+  border-color: #cbd5e1 !important;
+}
+
+/* Tipografia de alto contraste no Modo Claro */
+html.light .text-white,
+html.light .text-zinc-100,
+html.light .text-zinc-200,
+html.light .text-zinc-300 {
+  color: #0f172a !important;
+}
+
+html.light .text-zinc-400,
+html.light .text-zinc-500 {
+  color: #475569 !important;
+}
+
+/* CORREÇÃO CRÍTICA: Previne que as letras sumam ao passar o mouse */
+html.light .hover\:text-white:hover {
+  color: #0f172a !important;
+}
+
+html.light .group:hover .group-hover\:text-white {
+  color: #0f172a !important;
+}
+
+html.light .hover\:text-zinc-100:hover,
+html.light .hover\:text-zinc-200:hover,
+html.light .hover\:text-zinc-300:hover {
+  color: #0f172a !important;
+}
+
+html.light .group:hover .group-hover\:text-zinc-100,
+html.light .group:hover .group-hover\:text-zinc-200,
+html.light .group:hover .group-hover\:text-zinc-300 {
+  color: #0f172a !important;
+}
+
+/* Quando o hover tem fundo laranja/colorido, o texto DEVE ser branco */
+html.light .hover\:bg-orange-500:hover,
+html.light .hover\:bg-orange-500:hover *,
+html.light .group:hover .group-hover\:bg-orange-500,
+html.light .hover\:bg-orange-600:hover,
+html.light .hover\:bg-orange-600:hover *,
+html.light .hover\:bg-amber-500:hover,
+html.light .hover\:bg-amber-500:hover * {
+  color: #ffffff !important;
+}
+
+/* Links/textos que viram laranja no hover ficam com tom vibrante e legível */
+html.light .hover\:text-orange-400:hover,
+html.light .group:hover .group-hover\:text-orange-400,
+html.light .hover\:text-orange-500:hover,
+html.light .group:hover .group-hover\:text-orange-500 {
+  color: #ea580c !important;
+}
+
+/* Cores de destaque (Orange, Amber, Emerald, Red, Indigo) mantêm o texto branco se o fundo for colorido */
+html.light .bg-orange-500,
+html.light .bg-orange-600,
+html.light .bg-amber-500,
+html.light .bg-amber-600,
+html.light .bg-emerald-500,
+html.light .bg-emerald-600,
+html.light .bg-indigo-600,
+html.light .bg-blue-600,
+html.light .bg-red-500,
+html.light .bg-red-600 {
+  color: #ffffff !important;
+}
+
+html.light .bg-orange-500 *,
+html.light .bg-orange-600 *,
+html.light .bg-amber-500 *,
+html.light .bg-emerald-500 *,
+html.light .bg-red-500 * {
+  color: #ffffff !important;
+}
+
+/* Capas de repertório com gradiente ou foto: preservam texto e selos brancos */
+html.light .aspect-square,
+html.light .aspect-square h3,
+html.light .aspect-square h4,
+html.light .aspect-square span,
+html.light .aspect-square svg,
+html.light [class*="from-orange-"] h3,
+html.light [class*="from-zinc-"] h3 {
+  color: #ffffff !important;
+}
+
+html.light .aspect-square .bg-black\/50,
+html.light .aspect-square .bg-black\/40 {
+  background-color: rgba(0, 0, 0, 0.6) !important;
+  color: #ffffff !important;
+}
+
+/* Selos de abas inativas (contadores de itens) */
+html.light .bg-black\/30 {
+  background-color: #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+/* Trilhos de barra de progresso */
+html.light .h-1\.5.bg-zinc-800,
+html.light .h-2.bg-zinc-800,
+html.light .h-1.bg-zinc-800 {
+  background-color: #e2e8f0 !important;
+}
+
+/* Badges de níveis na Academy para alta legibilidade */
+html.light .bg-emerald-500\/10 {
+  background-color: #ecfdf5 !important;
+  color: #047857 !important;
+  border-color: #a7f3d0 !important;
+}
+
+html.light .bg-amber-500\/10 {
+  background-color: #fffbeb !important;
+  color: #b45309 !important;
+  border-color: #fde68a !important;
+}
+
+html.light .bg-purple-500\/10 {
+  background-color: #faf5ff !important;
+  color: #6b21a8 !important;
+  border-color: #e9d5ff !important;
+}
+
+html.light .bg-cyan-500\/10 {
+  background-color: #ecfeff !important;
+  color: #0e7490 !important;
+  border-color: #a5f3fc !important;
+}
+
+html.light .bg-rose-500\/10 {
+  background-color: #fff1f2 !important;
+  color: #be123c !important;
+  border-color: #fecdd3 !important;
+}
+
+html.light .bg-\[\#ff7b00\]\/10,
+html.light .bg-\[\#ff7b00\]\/15 {
+  background-color: #fff7ed !important;
+  color: #c2410c !important;
+  border-color: #fed7aa !important;
+}
+
+/* Ajustes de tom nos textos de acento laranja/amarelo para legibilidade em fundo claro */
+html.light .text-orange-400 {
+  color: #ea580c !important;
+}
+
+html.light .text-orange-500 {
+  color: #c2410c !important;
+}
+
+html.light .text-amber-400 {
+  color: #d97706 !important;
+}
+
+/* Barra de Navegação Inferior (MobileBottomNav) no modo claro */
+html.light nav.fixed {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Toolbar Flutuante do Palco (SongFloatingToolbar) no modo claro */
+html.light .bg-\[\#18181b\]\/95.rounded-full {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.15) !important;
+  color: #0f172a !important;
+}
+
+/* Modais e Overlays */
+html.light .bg-black\/70,
+html.light .bg-black\/80 {
+  background-color: rgba(15, 23, 42, 0.5) !important;
+  backdrop-filter: blur(4px);
+}
+
+/* Inputs de busca, caixas de texto e selects */
+html.light input,
+html.light textarea,
+html.light select {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
